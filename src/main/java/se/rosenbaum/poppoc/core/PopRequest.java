@@ -1,6 +1,10 @@
 package se.rosenbaum.poppoc.core;
 
-public class PopRequest {
+import java.io.Serializable;
+import java.net.URLEncoder;
+
+public class PopRequest implements Serializable {
+
     Long nonce;
     String txid;
     Long amount;
@@ -43,4 +47,5 @@ public class PopRequest {
     public Long getNonce() {
         return nonce;
     }
+
 }

@@ -3,8 +3,7 @@ package se.rosenbaum.poppoc.servlet;
 import org.bitcoinj.core.Address;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.rosenbaum.poppoc.core.PendingPopRequests;
-import se.rosenbaum.poppoc.core.PopRequest;
+import se.rosenbaum.poppoc.core.Storage;
 import se.rosenbaum.poppoc.core.Wallet;
 
 import javax.servlet.RequestDispatcher;
@@ -16,18 +15,21 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.nio.ByteBuffer;
-import java.security.SecureRandom;
-import java.util.Random;
 
 @WebServlet(urlPatterns = "/RequestPayment/*", name = "RequestPayment")
 public class RequestPayment extends HttpServlet {
     Logger logger = LoggerFactory.getLogger(RequestPayment.class);
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String serviceId = request.getParameter("serviceId");
+        if (serviceId == null || "".equals(serviceId.trim())) {
+            logger.error("serviceId is empty or null");
+            throw new RuntimeException("ServiceId is null or empty");
+        }
 
         Wallet wallet = (Wallet) request.getServletContext().getAttribute("wallet");
         Address address = wallet.currentReceiveAddress();
+        logger.debug("Generating address {}", address.toString());
 
         String paymentUri = "bitcoin:" + URLEncoder.encode(address.toString(), "UTF-8");
 
@@ -35,7 +37,11 @@ public class RequestPayment extends HttpServlet {
         paymentUri = appendParam(request, "label", paymentUri);
         paymentUri = appendParam(request, "message", paymentUri);
 
+        Storage storage = (Storage)request.getServletContext().getAttribute("storage");
+        storage.storePendingPayment(address, serviceId);
 
+        request.setAttribute("receiveAddress", address);
+        request.setAttribute("serviceId", serviceId);
         request.setAttribute("paymentUri", paymentUri);
         request.setAttribute("paymentUriUrlEncoded", urlEncode(paymentUri));
         RequestDispatcher requestDispatcher = request.getRequestDispatcher("/requestPayment.jsp");

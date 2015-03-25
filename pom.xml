@@ -14,7 +14,7 @@
         <servlet.api.version>3.0.1</servlet.api.version>
         <tomcat.plugin.version>2.2</tomcat.plugin.version>
         <tomcat.listen.port>9090</tomcat.listen.port>
-        <tomcat.path>/</tomcat.path>
+        <tomcat.path>/poppoc</tomcat.path>
         <jstl.version>1.2</jstl.version>
         <taglibs-standard-impl.version>1.2.3</taglibs-standard-impl.version>
         <bitcoinj.version>0.12</bitcoinj.version>
@@ -22,6 +22,7 @@
         <qrgen.version>2.0</qrgen.version>
         <slf4j.version>1.7.6</slf4j.version>
         <maven-war-plugin.version>2.6</maven-war-plugin.version>
+        <log4j2.version>2.2</log4j2.version>
     </properties>
 
     <dependencies>
@@ -42,9 +43,9 @@
             <version>${qrgen.version}</version>
         </dependency>
         <dependency>
-            <groupId>net.sf.ehcache</groupId>
-            <artifactId>ehcache-core</artifactId>
-            <version>${ehcache.version}</version>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-embedded</artifactId>
+            <version>7.1.0.Final</version>
         </dependency>
         <dependency>
             <groupId>org.bitcoinj</groupId>
@@ -57,9 +58,26 @@
             <version>${slf4j.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>${slf4j.version}</version>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.efsavage.jquery</groupId>
+            <artifactId>jquery-maven</artifactId>
+            <version>1.8.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.8.2</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

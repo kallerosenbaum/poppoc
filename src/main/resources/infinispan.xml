@@ -1,0 +1,21 @@
+<infinispan>
+    <cache-container default-cache="defaultCache">
+        <local-cache name="defaultCache">
+            <eviction strategy="LRU" max-entries="1024"/>
+            <expiration lifespan="3600000"/>
+            <persistence>
+                <file-store path="/tmp/myDataStore" max-entries="1024"/>
+            </persistence>
+            <transaction
+                    transactionManagerLookupClass="org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup"
+                    transactionMode="TRANSACTIONAL"
+                    lockingMode="OPTIMISTIC"/>
+        </local-cache>
+        <local-cache name="paymentRequests"/>
+        <local-cache name="paidServices">
+            <expiration lifespan="86400000"/>
+        </local-cache>
+        <local-cache name="pendingPopRequests"/>
+        <local-cache name="verifiedPops"/>
+    </cache-container>
+</infinispan>
