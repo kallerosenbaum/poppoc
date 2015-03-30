@@ -20,7 +20,7 @@ public class GenerateQRCode extends HttpServlet {
 
         response.setContentType("image/png");
 
-        QRCode.from(popRequest).writeTo(response.getOutputStream());
+        QRCode.from(popRequest).withSize(300, 300).writeTo(response.getOutputStream());
     }
 
     private String urlEncode(String value) throws UnsupportedEncodingException {

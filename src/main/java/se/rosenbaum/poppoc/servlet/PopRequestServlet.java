@@ -35,7 +35,7 @@ public class PopRequestServlet extends HttpServlet {
 
     protected String createPopRequestUri(PopRequest popRequest, String contextPath, int requestId) throws UnsupportedEncodingException {
         String popUrl = Config.POP_DESTINATION + contextPath + "/Pop/" + requestId;
-        String popRequestUri = "bitcoin:?p=" + URLEncoder.encode(popUrl, "UTF-8");
+        String popRequestUri = "btcpop:?p=" + URLEncoder.encode(popUrl, "UTF-8");
 
         popRequestUri += "&nonce=" + popRequest.getNonce();
 

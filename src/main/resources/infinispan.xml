@@ -7,9 +7,9 @@
                 <file-store path="/tmp/myDataStore" max-entries="1024"/>
             </persistence>
             <transaction
-                    transactionManagerLookupClass="org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup"
-                    transactionMode="TRANSACTIONAL"
-                    lockingMode="OPTIMISTIC"/>
+                    mode="BATCH"
+                    transaction-manager-lookup="org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup"
+                    locking="OPTIMISTIC"/>
         </local-cache>
         <local-cache name="paymentRequests"/>
         <local-cache name="paidServices">
