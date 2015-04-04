@@ -33,23 +33,20 @@ public class Storage implements ServletContextListener {
     }
 
     /**
-     * Step 2: when receiving a payment, get the serviceId for it if available and
-     * remove it the association from step 1.
+     * Step 2: Find the serviceId associated with the paymentAddress. If found,
+     * move the record to paidServices. Return the serviceId paid for,
      */
-    public String getServiceIdForPendingPayment(Address paymentAddress) {
-        return paymentRequests.remove(paymentAddress);
+    public String storePayment(Address paymentAddress) {
+        String serviceId = paymentRequests.get(paymentAddress);
+        if (serviceId != null) {
+            paidServices.put(paymentAddress, serviceId);
+            paymentRequests.remove(paymentAddress);
+        }
+        return serviceId;
     }
 
     /**
-     * Step 3: record that we have received a payment to an address and associate it with
-     * the serviceId
-     */
-    public void storePayment(String serviceId, Address address) {
-        paidServices.put(address, serviceId);
-    }
-
-    /**
-     * Step 4: Check that we have received a payment to a certain address. This is done
+     * Step 3: Check that we have received a payment to a certain address. This is done
      * to notify the user that the payment is received.
      */
     public String getServiceIdForPayment(Address address) {
@@ -57,7 +54,7 @@ public class Storage implements ServletContextListener {
     }
 
     /**
-     * Step 5: A PopRequest is created, stored here, and sent to the user. The
+     * Step 4: A PopRequest is created, stored here, and sent to the user. The
      * returned requestId is later used to check the Pop against the PopRequest.
      */
     public int store(PopRequest request) {
@@ -67,30 +64,24 @@ public class Storage implements ServletContextListener {
     }
 
     /**
-     * Step 6: Get the PopRequest in order to validate an incoming Pop.
+     * Step 5: Get the PopRequest in order to validate an incoming Pop.
      */
     public PopRequest getPopRequest(int requestId) {
         return popRequests.get(Integer.valueOf(requestId));
     }
 
     /**
-     * Step 7: If the Pop is valid, the PopRequest is removed
+     * Step 6: Store the information that the Pop has been received and verified
      */
-    public PopRequest removePopRequest(int requestId) {
-        return popRequests.remove(Integer.valueOf(requestId));
+    public void storeVerifiedPop(int requestId) {
+        verifiedPops.put(requestId, Boolean.valueOf(true));
+        popRequests.remove(Integer.valueOf(requestId));
     }
 
     /**
-     * Step 8: Store the information that the Pop has been received and verified
+     * Step 7: Check if the PopRequest with the specified requestId has been successfully fulfilled.
      */
-    public void storeVerifiedPop(String requestId) {
-        verifiedPops.put(Integer.valueOf(requestId), Boolean.valueOf(true));
-    }
-
-    /**
-     * Step 9: Check if the PopRequest with the specified requestId has been successfully met.
-     */
-    public boolean removeVerifiedPop(String requestId) {
+    public boolean removeVerifiedPop(int requestId) {
         Boolean isVerified = verifiedPops.remove(requestId);
         if (isVerified == null) {
             return false;
@@ -98,10 +89,11 @@ public class Storage implements ServletContextListener {
         return isVerified;
     }
 
-
-    @Override
     public void contextInitialized(ServletContextEvent servletContextEvent) {
         logger.debug("Storage initializing");
+        ServletContext servletContext = servletContextEvent.getServletContext();
+        Config config = (Config)servletContext.getAttribute("config");
+        System.setProperty("cache.data.store", config.getCachePersistenceDirectory().getAbsolutePath());
         try {
             cacheManager = new DefaultCacheManager("infinispan.xml");
         } catch (IOException e) {
@@ -111,11 +103,27 @@ public class Storage implements ServletContextListener {
         paidServices = cacheManager.getCache("paidServices");
         popRequests = cacheManager.getCache("pendingPopRequests");
         verifiedPops = cacheManager.getCache("verifiedPops");
-        ServletContext servletContext = servletContextEvent.getServletContext();
+
+        // Make sure we don't reuse requestIds that are still in use.
+        // This is a very clumsy way of doing it that possibly never will
+        // start over from 0. We want these numbers to be short since they
+        // are used in pop-urls and we want pop-urls to be short.
+        id.set(getMaxRequestId() + 1);
+
         servletContext.setAttribute("storage", this);
     }
 
-    @Override
+    private int getMaxRequestId() {
+        int maxRequestId = -1;
+        for (Integer requestId : popRequests.keySet()) {
+            maxRequestId = Math.max(maxRequestId, requestId);
+        }
+        for (Integer requestId : verifiedPops.keySet()) {
+            maxRequestId = Math.max(maxRequestId, requestId);
+        }
+        return maxRequestId;
+    }
+
     public void contextDestroyed(ServletContextEvent servletContextEvent) {
         logger.debug("Storage shutting down");
         if (cacheManager != null) {

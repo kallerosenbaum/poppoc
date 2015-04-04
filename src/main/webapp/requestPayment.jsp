@@ -5,7 +5,7 @@
     <script>
         function pollPayment() {
             $.ajax({
-                url : 'http://localhost:8080/poppoc/PaymentPoll?address=${receiveAddress}',
+                url : 'http://localhost:8080/poppoc/PaymentPoll?receiveAddress=${receiveAddress}',
                 type: 'GET',
                 success : function(data) {
                     if (data === 'PAYMENT RECEIVED') {
@@ -20,10 +20,10 @@
         }
         pollPayment();
     </script>
-
 </head>
 
 <body>
+
     Please pay any amount to:<br/>
     <a href="<c:out value="${paymentUri}"/>"><c:out value="${paymentUri}"/></a><br/>
 

@@ -4,12 +4,8 @@
             <eviction strategy="LRU" max-entries="1024"/>
             <expiration lifespan="3600000"/>
             <persistence>
-                <file-store path="/tmp/myDataStore" max-entries="1024"/>
+                <file-store path="${cache.data.store}" max-entries="1024"/>
             </persistence>
-            <transaction
-                    mode="BATCH"
-                    transaction-manager-lookup="org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup"
-                    locking="OPTIMISTIC"/>
         </local-cache>
         <local-cache name="paymentRequests"/>
         <local-cache name="paidServices">

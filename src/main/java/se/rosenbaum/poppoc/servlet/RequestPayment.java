@@ -9,41 +9,39 @@ import se.rosenbaum.poppoc.core.Wallet;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 
 @WebServlet(urlPatterns = "/RequestPayment/*", name = "RequestPayment")
-public class RequestPayment extends HttpServlet {
+public class RequestPayment extends BasicServlet {
     Logger logger = LoggerFactory.getLogger(RequestPayment.class);
 
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String serviceId = request.getParameter("serviceId");
+        String serviceId = request.getParameter(JspConst.SERVICE_ID.val());
         if (serviceId == null || "".equals(serviceId.trim())) {
             logger.error("serviceId is empty or null");
             throw new RuntimeException("ServiceId is null or empty");
         }
 
-        Wallet wallet = (Wallet) request.getServletContext().getAttribute("wallet");
+        Wallet wallet = getWallet();
         Address address = wallet.currentReceiveAddress();
         logger.debug("Generating address {}", address.toString());
 
-        String paymentUri = "bitcoin:" + URLEncoder.encode(address.toString(), "UTF-8");
+        String paymentUri = "bitcoin:" + urlEncode(address.toString());
 
         paymentUri = appendParam(request, "amount", paymentUri);
         paymentUri = appendParam(request, "label", paymentUri);
         paymentUri = appendParam(request, "message", paymentUri);
 
-        Storage storage = (Storage)request.getServletContext().getAttribute("storage");
+        Storage storage = getStorage();
         storage.storePendingPayment(address, serviceId);
 
-        request.setAttribute("receiveAddress", address);
-        request.setAttribute("serviceId", serviceId);
-        request.setAttribute("paymentUri", paymentUri);
-        request.setAttribute("paymentUriUrlEncoded", urlEncode(paymentUri));
+        request.setAttribute(JspConst.RECEIVE_ADDRESS.val(), address);
+        request.setAttribute(JspConst.SERVICE_ID.val(), serviceId);
+        request.setAttribute(JspConst.PAYMENT_URI.val(), paymentUri);
+        request.setAttribute(JspConst.PAYMENT_URI_URL_ENCODED.val(), urlEncode(paymentUri));
         RequestDispatcher requestDispatcher = request.getRequestDispatcher("/requestPayment.jsp");
         requestDispatcher.forward(request, response);
     }
@@ -54,21 +52,6 @@ public class RequestPayment extends HttpServlet {
             uri += (uri.contains("?") ? "&" : "?") + param + "=" + urlEncode(value);
         }
         return uri;
-    }
-
-    private String urlEncode(String value) throws UnsupportedEncodingException {
-        return URLEncoder.encode(value, "UTF-8");
-    }
-
-    private boolean isSet(String value) {
-        return value != null && !value.trim().isEmpty();
-    }
-
-    private Long parseLong(String value) {
-        if (!isSet(value)) {
-            return null;
-        }
-        return Long.parseLong(value);
     }
 
 }

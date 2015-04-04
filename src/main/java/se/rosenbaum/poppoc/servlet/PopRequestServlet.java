@@ -1,41 +1,49 @@
 package se.rosenbaum.poppoc.servlet;
 
-import se.rosenbaum.poppoc.core.Config;
 import se.rosenbaum.poppoc.core.PopRequest;
 import se.rosenbaum.poppoc.core.Storage;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.Random;
 
-public class PopRequestServlet extends HttpServlet {
+public class PopRequestServlet extends BasicServlet {
+
     protected void createPopRequest(HttpServletRequest request, HttpServletResponse response, String txid, Long amount, String text) throws ServletException, IOException {
         PopRequest popRequest = createPopRequest(txid, amount, text);
 
-        Storage pendingPopRequests = (Storage)getServletContext().getAttribute("storage");
-        int requestId = pendingPopRequests.store(popRequest);
+        Storage storage = getStorage();
+        int requestId = storage.store(popRequest);
 
 
-        String popRequestUri = createPopRequestUri(popRequest, getServletContext().getContextPath(), requestId);
+        String contextPath = getServletContext().getContextPath();
+        String popRequestUri = createPopRequestUri(popRequest, contextPath, requestId);
+        String popPollUrl = craetePopPollUrl(requestId, contextPath);
 
-        request.setAttribute("popRequest", popRequestUri);
-        request.setAttribute("popRequestUrlEncoded", urlEncode(popRequestUri));
-        request.setAttribute("requestId", requestId);
+        request.setAttribute(JspConst.POP_REQUEST.val(), popRequestUri);
+        request.setAttribute(JspConst.POP_REQUEST_URL_ENCODED.val(), urlEncode(popRequestUri));
+        request.setAttribute(JspConst.POP_POLL_URL.val(), popPollUrl);
+        HttpSession session = request.getSession(true);
+        session.setAttribute(SESSION_POP_REQUEST_ID, session.getId());
         RequestDispatcher requestDispatcher = request.getRequestDispatcher("/popRequest.jsp");
         requestDispatcher.forward(request, response);
     }
 
+    private String craetePopPollUrl(int requestId, String contextPath) {
+        String popPollUrl = getConfig().getPopDesitnation() + contextPath + "/PopPoll/?requestId=" + requestId;
+        return popPollUrl;
+    }
+
     protected String createPopRequestUri(PopRequest popRequest, String contextPath, int requestId) throws UnsupportedEncodingException {
-        String popUrl = Config.POP_DESTINATION + contextPath + "/Pop/" + requestId;
-        String popRequestUri = "btcpop:?p=" + URLEncoder.encode(popUrl, "UTF-8");
+        String popUrl = getConfig().getPopDesitnation() + contextPath + "/Pop/" + requestId;
+        String popRequestUri = "btcpop:?p=" + urlEncode(popUrl);
 
         popRequestUri += "&nonce=" + popRequest.getNonce();
 
@@ -68,10 +76,6 @@ public class PopRequestServlet extends HttpServlet {
         popRequest.setText(text);
         popRequest.setTxid(txid);
         return popRequest;
-    }
-
-    protected String urlEncode(String value) throws UnsupportedEncodingException {
-        return URLEncoder.encode(value, "UTF-8");
     }
 
     protected boolean isSet(String value) {

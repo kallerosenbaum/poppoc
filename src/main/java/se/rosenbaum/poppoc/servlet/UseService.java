@@ -14,7 +14,7 @@ public class UseService extends PopRequestServlet {
     private Logger logger = LoggerFactory.getLogger(UseService.class);
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String serviceId = request.getParameter("serviceId");
+        String serviceId = request.getParameter(JspConst.SERVICE_ID.val());
         if (!isSet(serviceId)) {
             logger.error("serviceId is empty or null");
             throw new RuntimeException("ServiceId is null or empty");

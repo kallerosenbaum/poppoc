@@ -33,47 +33,51 @@ import java.util.regex.Pattern;
 
 @WebServlet(urlPatterns = "/Pop/*", name = "Pop")
 @MultipartConfig
-public class PopServlet extends HttpServlet {
+public class PopServlet extends BasicServlet {
     Logger logger = LoggerFactory.getLogger(PopServlet.class);
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        Storage storage = (Storage) request.getServletContext().getAttribute("storage");
-        int requestId = getRequestId(request.getPathInfo());
+        Storage storage = getStorage();
+
+        int requestId = getRequestId(request.getRequestURI());
         if (requestId < 0) {
-            throw new ServletException("Invalid requestId " + requestId);
+            replyError("Invalid requestId " + requestId, response, null);
+            return;
         }
 
         PopRequest popRequest = storage.getPopRequest(requestId);
         if (popRequest == null) {
-            throw new ServletException("No PoP request associated with requestId " + requestId);
+            replyError("No PoP request associated with requestId " + requestId, response, null);
+            return;
         }
 
-        if (request.getParts().size() != 1) {
-            throw new ServletException("Wrong number of parts in request. Expected 1");
-        }
-
-        Part part = request.getParts().iterator().next();
-        InputStream in = part.getInputStream();
+        InputStream in = request.getInputStream();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
         int count = 0;
         while ((count = in.read(buffer)) > -1 && out.size() < Transaction.MAX_STANDARD_TX_SIZE) {
             out.write(buffer, 0, count);
         }
+        Pop pop = new Pop(getConfig().getNetworkParameters(), out.toByteArray());
 
-        Pop pop = new Pop(Config.NETWORK_PARAMETERS, out.toByteArray());
-
-        String responseString;
         try {
-            Wallet wallet = (Wallet)request.getServletContext().getAttribute("wallet");
-            validatePop(wallet, pop, popRequest);
-            responseString = "valid";
+            validatePop(getWallet(), pop, popRequest);
+            replySuccess(response);
+            // TODO: make storage transactional.
+            storage.storeVerifiedPop(requestId);
         } catch (InvalidPopException e) {
-            logger.debug("Invalid pop exception", e);
-            responseString = "invalid\n" + e.getMessage();
+            replyError(e.getMessage(), response, e);
         }
 
-        response.getOutputStream().print(responseString);
+    }
+
+    private void replySuccess(HttpServletResponse response) throws IOException {
+        response.getOutputStream().print("valid");
+    }
+
+    private void replyError(String message, HttpServletResponse response, Exception e) throws IOException {
+        logger.debug("Invalid pop: " + message, e);
+        response.getOutputStream().print("invalid\n" + message);
     }
 
     int getRequestId(String path) {
@@ -103,10 +107,12 @@ public class PopServlet extends HttpServlet {
 
         byte[] data = checkOutput(pop);
 
-        Sha256Hash txid = new Sha256Hash(ByteBuffer.wrap(data, 3, 32).array());
+        byte[] txidBytes = new byte[32];
+        System.arraycopy(data, 4, txidBytes, 0, 32);
+        Sha256Hash txid = new Sha256Hash(txidBytes);
 
         byte[] nonceBytes = new byte[8];
-        System.arraycopy(data, 35, nonceBytes, 3, 5);
+        System.arraycopy(data, 36, nonceBytes, 3, 5);
         long nonce = ByteBuffer.wrap(nonceBytes).getLong();
 
         if (nonce != popRequest.getNonce()) {
@@ -144,6 +150,16 @@ public class PopServlet extends HttpServlet {
             }
             // Check signature
             try {
+                // connect the input to the right transaction:
+
+                Transaction inputTx = wallet.getTransaction(bcInput.getOutpoint().getHash());
+                if (inputTx == null) {
+                    String message = "Could not find input tx: " + bcInput.getOutpoint().getHash();
+                    logger.debug(message);
+                    throw new InvalidPopException(message);
+                }
+                popInput.connect(inputTx, TransactionInput.ConnectMode.ABORT_ON_CONFLICT);
+
                 popInput.verify();
             } catch (Exception e) {
                 logger.debug("Failed to verify input", e);
@@ -159,24 +175,17 @@ public class PopServlet extends HttpServlet {
         }
         TransactionOutput output = outputs.get(0);
 
-        List<ScriptChunk> chunks = output.getScriptPubKey().getChunks();
-        if (chunks.size() != 2) {
-            throw new InvalidPopException("Misformed output");
+        byte[] scriptBytes = output.getScriptBytes();
+        if (scriptBytes == null || scriptBytes.length != 41) {
+            throw new InvalidPopException("Invalid script length. Expected 41");
         }
-        ScriptChunk opReturn = chunks.get(0);
-        if (!opReturn.equalsOpCode(ScriptOpCodes.OP_RETURN)) {
-            throw new InvalidPopException("Wrong opcode");
-        }
-
-        ScriptChunk txidAndNonce = chunks.get(1);
-        byte[] data = txidAndNonce.data;
-        if (data == null || data.length != 40) {
-            throw new InvalidPopException("Invalid data length. Expected 40");
+        if (scriptBytes[0] != ScriptOpCodes.OP_RETURN) {
+            throw new InvalidPopException("Wrong opcode: " + scriptBytes[0]);
         }
 
         String popLiteral;
         try {
-            popLiteral = new String(data, 0, 3, "US-ASCII");
+            popLiteral = new String(scriptBytes, 1, 3, "US-ASCII");
         } catch (UnsupportedEncodingException e) {
             throw new InvalidPopException("Could not decode \"PoP\" literal");
         }
@@ -184,7 +193,7 @@ public class PopServlet extends HttpServlet {
             throw new InvalidPopException("Invalid \"PoP\" literal. Got " + popLiteral);
         }
 
-        return data;
+        return scriptBytes;
     }
 
 }

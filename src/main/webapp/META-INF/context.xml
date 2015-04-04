@@ -1,0 +1,22 @@
+<Context>
+
+    <Parameter name="network"
+               value="org.bitcoin.test"
+               override="false"
+               description="org.bitcoin.production or org.bitcoin.test"/>
+
+    <Parameter name="popDesitnation"
+               value="http://192.168.0.129:8080"
+               override="false"
+               description="URL excluding the context part to where the PoPs should be sent"/>
+
+    <Parameter name="walletDir"
+               value="/home/kalle/Documents/popWallets"
+               override="false"
+               description="A separate wallet for testnet and prod will be created under this directory. It will be created (recursively) if it does not exist."/>
+
+    <Parameter name="cachePersistenceDir"
+               value="/tmp/myDataStore"
+               override="false"
+               description="Caches will be stored under this directory. It will be created (recursively) if it does not exist."/>
+</Context>
