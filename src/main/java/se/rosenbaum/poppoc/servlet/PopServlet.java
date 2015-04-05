@@ -1,27 +1,17 @@
 package se.rosenbaum.poppoc.servlet;
 
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.script.ScriptChunk;
+import org.bitcoinj.core.*;
 import org.bitcoinj.script.ScriptOpCodes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.rosenbaum.poppoc.core.Config;
-import se.rosenbaum.poppoc.core.InvalidPopException;
-import se.rosenbaum.poppoc.core.Pop;
-import se.rosenbaum.poppoc.core.PopRequest;
-import se.rosenbaum.poppoc.core.Storage;
+import se.rosenbaum.poppoc.core.*;
 import se.rosenbaum.poppoc.core.Wallet;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.Part;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,14 +27,13 @@ public class PopServlet extends BasicServlet {
     Logger logger = LoggerFactory.getLogger(PopServlet.class);
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        Storage storage = getStorage();
-
         int requestId = getRequestId(request.getRequestURI());
         if (requestId < 0) {
             replyError("Invalid requestId " + requestId, response, null);
             return;
         }
 
+        Storage storage = getStorage();
         PopRequest popRequest = storage.getPopRequest(requestId);
         if (popRequest == null) {
             replyError("No PoP request associated with requestId " + requestId, response, null);
@@ -63,7 +52,6 @@ public class PopServlet extends BasicServlet {
         try {
             validatePop(getWallet(), pop, popRequest);
             replySuccess(response);
-            // TODO: make storage transactional.
             storage.storeVerifiedPop(requestId);
         } catch (InvalidPopException e) {
             replyError(e.getMessage(), response, e);
@@ -127,12 +115,17 @@ public class PopServlet extends BasicServlet {
             // Check if txid actually paid for the service requested.
             // A bit hard to implement, so skipping for now.
         }
-
-        checkInputs(wallet, pop, txid);
+        checkProvedTransaction(wallet, pop, popRequest, txid);
     }
 
-    private void checkInputs(Wallet wallet, Pop pop, Sha256Hash txid) throws InvalidPopException {
+    private void checkProvedTransaction(Wallet wallet, Pop pop, PopRequest popRequest, Sha256Hash txid) throws InvalidPopException {
         Transaction blockchainTx = wallet.getTransaction(txid);
+        if (blockchainTx == null) {
+            throw new InvalidPopException("Unknown transaction");
+        }
+
+        checkPaysForCorrectService(popRequest, blockchainTx);
+
         List<TransactionInput> popInputs = pop.getInputs();
         List<TransactionInput> blockchainTxInputs = blockchainTx.getInputs();
         if (popInputs.size() != blockchainTxInputs.size()) {
@@ -165,6 +158,28 @@ public class PopServlet extends BasicServlet {
                 logger.debug("Failed to verify input", e);
                 throw new InvalidPopException("Signature verification failed", e);
             }
+        }
+    }
+
+    private void checkPaysForCorrectService(PopRequest popRequest, Transaction blockchainTx) throws InvalidPopException {
+        NetworkParameters networkParameters = getConfig().getNetworkParameters();
+        boolean paysForCorrectService = false;
+        for (TransactionOutput transactionOutput : blockchainTx.getOutputs()) {
+            Address outputAddress = transactionOutput.getAddressFromP2PKHScript(networkParameters);
+            if (outputAddress == null) {
+                outputAddress = transactionOutput.getAddressFromP2SH(networkParameters);
+                if (outputAddress == null) {
+                    continue; // No address found here, try the next output
+                }
+            }
+            Integer serviceIdForPayment = getStorage().getServiceIdForPayment(outputAddress);
+            if (serviceIdForPayment != null && serviceIdForPayment.equals(popRequest.getServiceId())) {
+                paysForCorrectService = true;
+                break;
+            }
+        }
+        if (!paysForCorrectService) {
+            throw new InvalidPopException("Proven transaction does not pay for serviceId " + popRequest.getServiceId());
         }
     }
 

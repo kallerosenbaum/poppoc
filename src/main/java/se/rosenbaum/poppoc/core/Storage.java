@@ -10,6 +10,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -20,15 +21,15 @@ public class Storage implements ServletContextListener {
     private AtomicInteger id = new AtomicInteger(0);
 
     CacheContainer cacheManager;
-    private Map<Address, String> paymentRequests;
-    private Map<Address, String> paidServices;
-    private Map<Integer, PopRequest> popRequests;
-    private Map<Integer, Boolean> verifiedPops;
+    private Map<Address, Integer> paymentRequests; // paymentAddress -> serviceId
+    private Map<Address, Integer> paidServices;    // paymentAddress -> serviceId
+    private Map<Integer, PopRequest> popRequests; // requestId      -> PopRequest
+    private Map<Integer, Integer> verifiedPops;   // requestId      -> serviceId
 
     /**
      * Step 1: request a payment and associate the paymentAddress with the serviceId
      */
-    public void storePendingPayment(Address paymentAddress, String serviceId) {
+    public void storePendingPayment(Address paymentAddress, int serviceId) {
         paymentRequests.put(paymentAddress, serviceId);
     }
 
@@ -36,8 +37,8 @@ public class Storage implements ServletContextListener {
      * Step 2: Find the serviceId associated with the paymentAddress. If found,
      * move the record to paidServices. Return the serviceId paid for,
      */
-    public String storePayment(Address paymentAddress) {
-        String serviceId = paymentRequests.get(paymentAddress);
+    public Integer storePayment(Address paymentAddress) {
+        Integer serviceId = paymentRequests.get(paymentAddress);
         if (serviceId != null) {
             paidServices.put(paymentAddress, serviceId);
             paymentRequests.remove(paymentAddress);
@@ -49,7 +50,7 @@ public class Storage implements ServletContextListener {
      * Step 3: Check that we have received a payment to a certain address. This is done
      * to notify the user that the payment is received.
      */
-    public String getServiceIdForPayment(Address address) {
+    public Integer getServiceIdForPayment(Address address) {
         return paidServices.get(address);
     }
 
@@ -67,26 +68,29 @@ public class Storage implements ServletContextListener {
      * Step 5: Get the PopRequest in order to validate an incoming Pop.
      */
     public PopRequest getPopRequest(int requestId) {
-        return popRequests.get(Integer.valueOf(requestId));
+        return popRequests.get(requestId);
     }
 
     /**
      * Step 6: Store the information that the Pop has been received and verified
      */
     public void storeVerifiedPop(int requestId) {
-        verifiedPops.put(requestId, Boolean.valueOf(true));
-        popRequests.remove(Integer.valueOf(requestId));
+        PopRequest popRequest = popRequests.remove(requestId);
+        if (popRequest == null && verifiedPops.get(requestId) != null) {
+            return; // already verified. Actually an error condition.
+        }
+        if (popRequest == null && verifiedPops.get(requestId) == null) {
+            return; // The pop request was invalidated (too old) while verifying the pop.
+        }
+        verifiedPops.put(requestId, popRequest.getServiceId());
     }
 
     /**
      * Step 7: Check if the PopRequest with the specified requestId has been successfully fulfilled.
      */
-    public boolean removeVerifiedPop(int requestId) {
-        Boolean isVerified = verifiedPops.remove(requestId);
-        if (isVerified == null) {
-            return false;
-        }
-        return isVerified;
+    public Integer removeVerifiedPop(int requestId) {
+        Integer serviceId = verifiedPops.remove(requestId);
+        return serviceId;
     }
 
     public void contextInitialized(ServletContextEvent servletContextEvent) {

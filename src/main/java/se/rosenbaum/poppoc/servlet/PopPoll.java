@@ -28,29 +28,37 @@ public class PopPoll extends BasicServlet {
             logger.error("Malformed requestId {}", requestIdString);
             throw new RuntimeException("Malformed requestId: " + requestIdString, e);
         }
-        checkSessionPopRequestId(request, requestId);
+        HttpSession session = getSession(request);
+        checkSessionPopRequestId(session, requestId);
 
         Storage storage = getStorage();
-        Boolean wasVerified = storage.removeVerifiedPop(requestId);
+        Integer serviceId = storage.removeVerifiedPop(requestId);
+
         response.setContentType("text/plain; charset=US-ASCII");
-        if (wasVerified != null && wasVerified) {
+        if (serviceId != null) {
+            session.removeAttribute(SESSION_POP_REQUEST_ID);
+            addServiceToSession(session, serviceId);
             response.getWriter().write(JspConst.VALID_POP_RECEIVED.val());
         } else {
             response.getWriter().write(JspConst.POP_NOT_RECEIVED_YET.val());
         }
     }
 
-    private void checkSessionPopRequestId(HttpServletRequest request, int requestId) {
+    private HttpSession getSession(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session == null) {
             logger.error("No active session");
             throw new RuntimeException("No active session");
-        } else {
-            Object sessionRequestId = session.getAttribute(SESSION_POP_REQUEST_ID);
-            if (!("" + requestId).equals(sessionRequestId)) {
-                logger.error("Wrong or missing requestId in session. Expected {}, got {}", request, sessionRequestId);
-                throw new RuntimeException("No active session");
-            }
+        }
+        return session;
+    }
+
+    private void checkSessionPopRequestId(HttpSession session, int requestId) {
+        Integer sessionRequestId = (Integer)session.getAttribute(SESSION_POP_REQUEST_ID);
+        if (sessionRequestId == null || sessionRequestId != requestId) {
+            String message = String.format("Wrong or missing requestId in session. Expected %s, got %s", requestId, sessionRequestId);
+            logger.error(message);
+            throw new RuntimeException(message);
         }
     }
 }

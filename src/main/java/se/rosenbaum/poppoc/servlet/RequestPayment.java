@@ -19,11 +19,12 @@ public class RequestPayment extends BasicServlet {
     Logger logger = LoggerFactory.getLogger(RequestPayment.class);
 
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String serviceId = request.getParameter(JspConst.SERVICE_ID.val());
-        if (serviceId == null || "".equals(serviceId.trim())) {
+        String serviceIdString = request.getParameter(JspConst.SERVICE_ID.val());
+        if (serviceIdString == null || "".equals(serviceIdString.trim())) {
             logger.error("serviceId is empty or null");
             throw new RuntimeException("ServiceId is null or empty");
         }
+        int serviceId = Integer.parseInt(serviceIdString);
 
         Wallet wallet = getWallet();
         Address address = wallet.currentReceiveAddress();
@@ -38,10 +39,13 @@ public class RequestPayment extends BasicServlet {
         Storage storage = getStorage();
         storage.storePendingPayment(address, serviceId);
 
-        request.setAttribute(JspConst.RECEIVE_ADDRESS.val(), address);
+        String pollUrl = getConfig().getPopDesitnation() + request.getContextPath() + "/PaymentPoll?" +
+                JspConst.RECEIVE_ADDRESS.val() + "=" + address;
+
         request.setAttribute(JspConst.SERVICE_ID.val(), serviceId);
         request.setAttribute(JspConst.PAYMENT_URI.val(), paymentUri);
         request.setAttribute(JspConst.PAYMENT_URI_URL_ENCODED.val(), urlEncode(paymentUri));
+        request.setAttribute(JspConst.PAYMENT_POLL_URL.val(), pollUrl);
         RequestDispatcher requestDispatcher = request.getRequestDispatcher("/requestPayment.jsp");
         requestDispatcher.forward(request, response);
     }

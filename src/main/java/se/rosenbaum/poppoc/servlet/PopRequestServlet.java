@@ -16,8 +16,8 @@ import java.util.Random;
 
 public class PopRequestServlet extends BasicServlet {
 
-    protected void createPopRequest(HttpServletRequest request, HttpServletResponse response, String txid, Long amount, String text) throws ServletException, IOException {
-        PopRequest popRequest = createPopRequest(txid, amount, text);
+    protected void createPopRequest(HttpServletRequest request, HttpServletResponse response, int serviceId, String txid, Long amount, String text) throws ServletException, IOException {
+        PopRequest popRequest = createPopRequest(txid, amount, text, serviceId);
 
         Storage storage = getStorage();
         int requestId = storage.store(popRequest);
@@ -30,14 +30,15 @@ public class PopRequestServlet extends BasicServlet {
         request.setAttribute(JspConst.POP_REQUEST.val(), popRequestUri);
         request.setAttribute(JspConst.POP_REQUEST_URL_ENCODED.val(), urlEncode(popRequestUri));
         request.setAttribute(JspConst.POP_POLL_URL.val(), popPollUrl);
+        request.setAttribute(JspConst.SERVICE_ID.val(), serviceId);
         HttpSession session = request.getSession(true);
-        session.setAttribute(SESSION_POP_REQUEST_ID, session.getId());
+        session.setAttribute(SESSION_POP_REQUEST_ID, requestId);
         RequestDispatcher requestDispatcher = request.getRequestDispatcher("/popRequest.jsp");
         requestDispatcher.forward(request, response);
     }
 
     private String craetePopPollUrl(int requestId, String contextPath) {
-        String popPollUrl = getConfig().getPopDesitnation() + contextPath + "/PopPoll/?requestId=" + requestId;
+        String popPollUrl = getConfig().getPopDesitnation() + contextPath + "/PopPoll/?" + JspConst.REQUEST_ID.val() + "=" + requestId;
         return popPollUrl;
     }
 
@@ -61,7 +62,7 @@ public class PopRequestServlet extends BasicServlet {
         return popRequestUri;
     }
 
-    protected PopRequest createPopRequest(String txid, Long amount, String text) {
+    protected PopRequest createPopRequest(String txid, Long amount, String text, int serviceId) {
         Random random = new SecureRandom();
 
         byte[] nonceBytes = new byte[8];
@@ -71,7 +72,7 @@ public class PopRequestServlet extends BasicServlet {
         nonceBytes[2] = 0;
         long nonce = ByteBuffer.wrap(nonceBytes).getLong();
 
-        PopRequest popRequest = new PopRequest(nonce);
+        PopRequest popRequest = new PopRequest(nonce, serviceId);
         popRequest.setAmount(amount);
         popRequest.setText(text);
         popRequest.setTxid(txid);

@@ -13,7 +13,7 @@ public class GeneratePopRequest extends PopRequestServlet {
         String txid = request.getParameter("txid");
         Long amount = parseLong(request.getParameter("amount"));
         String text = request.getParameter("text");
-        createPopRequest(request, response, txid, amount, text);
+        createPopRequest(request, response, 1000, txid, amount, text);
     }
 
     private Long parseLong(String value) {

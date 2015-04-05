@@ -5,8 +5,10 @@ import se.rosenbaum.poppoc.core.Storage;
 import se.rosenbaum.poppoc.core.Wallet;
 
 import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpSession;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,6 +17,7 @@ import java.util.Map;
  */
 public class BasicServlet extends HttpServlet {
     public static final String SESSION_POP_REQUEST_ID = "popRequestId";
+    private static final String SESSION_AUTHORIZED_FOR_SERVICE = "authorizedForService";
 
     public enum JspConst {
 
@@ -24,6 +27,7 @@ public class BasicServlet extends HttpServlet {
         RECEIVE_ADDRESS("receiveAddress"),
         PAYMENT_URI("paymentUri"),
         PAYMENT_URI_URL_ENCODED("paymentUriUrlEncoded"),
+        PAYMENT_POLL_URL("paymentPollUrl"),
         POP_REQUEST("popRequest"),
         POP_REQUEST_URL_ENCODED("popRequestUrlEncoded"),
         POP_POLL_URL("popPollUrl"),
@@ -41,6 +45,25 @@ public class BasicServlet extends HttpServlet {
             return this.value;
         }
 
+    }
+
+
+    protected void addServiceToSession(HttpSession session, int serviceId) {
+        session.setAttribute(SESSION_AUTHORIZED_FOR_SERVICE + serviceId, new Date());
+    }
+
+    protected void removeServiceFromSession(HttpSession session, int serviceId) {
+        session.removeAttribute(SESSION_AUTHORIZED_FOR_SERVICE + serviceId);
+    }
+
+    protected boolean isAuthorized(HttpSession session, int serviceId) {
+        Date timeOfAuthentication = (Date)session.getAttribute(SESSION_AUTHORIZED_FOR_SERVICE + serviceId);
+        if (timeOfAuthentication == null) {
+            return false;
+        }
+        // We could check limit the time an authentication is valid here. But for now
+        // we authorize indefinately or until logout.
+        return true;
     }
 
     @Override

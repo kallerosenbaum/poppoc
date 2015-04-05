@@ -5,7 +5,7 @@
     <script>
         function pollPayment() {
             $.ajax({
-                url : 'http://localhost:8080/poppoc/PaymentPoll?receiveAddress=${receiveAddress}',
+                url : '${paymentPollUrl}',
                 type: 'GET',
                 success : function(data) {
                     if (data === 'PAYMENT RECEIVED') {
@@ -33,7 +33,7 @@
         Waiting for payment...
     </div>
     <div id="useServiceLink" style="visibility: hidden">
-        Now <a href="${pageContext.request.contextPath}/UseService?serviceId=${serviceId}">use the service</a>
+        Now <a href="${pageContext.request.contextPath}/Service?serviceId=${serviceId}">use the service</a>
     </div>
 </body>
 </html>

@@ -11,6 +11,7 @@
                     if (data === "VALID POP RECEIVED") {
                         $('#status').html("Pop received.");
                         $('#useServiceLink').css("visibility", "visible");
+                        window.location.href = "${pageContext.request.contextPath}/Service?serviceId=${serviceId}";
                     } else {
                         setTimeout(pollPayment, 3000);
                     }
@@ -32,6 +33,7 @@
 
     <a href="${popRequest}">${popRequest}</a><b/>
 
+    Have you not paid yet? <a href="${pageContext.request.contextPath}/RequestPayment?serviceId=${serviceId}">Pay here</a>
 
     <b/>
     <div id="status">

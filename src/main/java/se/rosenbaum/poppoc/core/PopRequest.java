@@ -10,14 +10,20 @@ public class PopRequest implements Serializable {
     Long amount;
     String text;
 
-    public PopRequest(Long nonce) {
+    int serviceId;
+
+    public PopRequest(Long nonce, int serviceId) {
         if (nonce == null) {
             throw new IllegalArgumentException("Nonce must not be null");
         }
         if (nonce < 0) {
             throw new IllegalArgumentException("Nonce must not be negative");
         }
+        if (serviceId < 1) {
+            throw new IllegalArgumentException("Service id must be >0, got " + serviceId);
+        }
         this.nonce = nonce;
+        this.serviceId = serviceId;
     }
 
     public String getTxid() {
@@ -48,4 +54,7 @@ public class PopRequest implements Serializable {
         return nonce;
     }
 
+    public int getServiceId() {
+        return serviceId;
+    }
 }

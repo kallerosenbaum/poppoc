@@ -24,7 +24,7 @@ public class PaymentPoll extends BasicServlet {
             throw new RuntimeException("Address " + addressString + " not parsable", e);
         }
 
-        String serviceId = getStorage().getServiceIdForPayment(address);
+        Integer serviceId = getStorage().getServiceIdForPayment(address);
         response.setContentType("text/plain; charset=US-ASCII");
         if (serviceId != null) {
             response.getWriter().write(JspConst.PAYMENT_RECEIVED.val());
