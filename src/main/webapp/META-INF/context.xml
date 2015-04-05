@@ -6,7 +6,7 @@
                description="org.bitcoin.production or org.bitcoin.test"/>
 
     <Parameter name="popDesitnation"
-               value="http://192.168.0.129:8080"
+               value="http://192.168.1.171:8080"
                override="false"
                description="URL excluding the context part to where the PoPs should be sent"/>
 
@@ -19,4 +19,11 @@
                value="/tmp/myDataStore"
                override="false"
                description="Caches will be stored under this directory. It will be created (recursively) if it does not exist."/>
+<!--
+    <Parameter name="sendFundsTo"
+               value="mn3vteF1dAps6nduCiKDEMzVYgtaLd2csW"
+               override="false"
+               description="On every payment to the server's wallet, empty the wallet and send to this address. If not
+               set, it will keep the funds on the server wallet"/>
+-->
 </Context>

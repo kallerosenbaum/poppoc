@@ -29,11 +29,12 @@
 
 <body>
     Pop request:<br/>
-    <img src="GenerateQRCode?popRequest=${popRequestUrlEncoded}"/>
 
-    <a href="${popRequest}">${popRequest}</a><b/>
+    <img src="GenerateQRCode?popRequest=${popRequestUrlEncoded}"/><br/>
 
-    Have you not paid yet? <a href="${pageContext.request.contextPath}/RequestPayment?serviceId=${serviceId}">Pay here</a>
+    <a href="${popRequest}">${popRequest}</a><br/>
+
+    Have you not paid yet? <a href="${pageContext.request.contextPath}/RequestPayment?serviceId=${serviceId}&label=service${serviceId}">Pay here</a>
 
     <b/>
     <div id="status">

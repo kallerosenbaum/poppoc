@@ -1,5 +1,6 @@
 package se.rosenbaum.poppoc.servlet;
 
+import org.bitcoinj.core.Coin;
 import se.rosenbaum.poppoc.core.PopRequest;
 import se.rosenbaum.poppoc.core.Storage;
 
@@ -53,7 +54,8 @@ public class PopRequestServlet extends BasicServlet {
         }
 
         if (popRequest.getAmount() != null) {
-            popRequestUri += "&amount=" + popRequest.getAmount();
+            Coin amount = Coin.valueOf(popRequest.getAmount());
+            popRequestUri += "&amount=" + amount.toPlainString();
         }
 
         if (isSet(popRequest.getText())) {

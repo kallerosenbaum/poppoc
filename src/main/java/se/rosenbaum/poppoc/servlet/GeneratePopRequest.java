@@ -1,5 +1,7 @@
 package se.rosenbaum.poppoc.servlet;
 
+import org.bitcoinj.core.Coin;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -10,17 +12,22 @@ import java.io.IOException;
 public class GeneratePopRequest extends PopRequestServlet {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String txid = request.getParameter("txid");
-        Long amount = parseLong(request.getParameter("amount"));
-        String text = request.getParameter("text");
-        createPopRequest(request, response, 1000, txid, amount, text);
+        String txid = getValue(request, "txid");
+        String amountString = getValue(request, "amount");
+        Coin coin = amountString == null ? null : Coin.parseCoin(amountString);
+        String text = getValue(request, "text");
+        createPopRequest(request, response, 1000, txid, coin.getValue(), text);
     }
 
-    private Long parseLong(String value) {
-        if (value == null || "".equals(value.trim())) {
+    private String getValue(HttpServletRequest request, String parameter) {
+        String value = request.getParameter(parameter);
+        if (value == null) {
             return null;
         }
-        return Long.parseLong(value);
+        value = value.trim();
+        if ("".equals(value)) {
+            return null;
+        }
+        return value;
     }
-
 }

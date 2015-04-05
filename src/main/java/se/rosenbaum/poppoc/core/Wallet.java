@@ -1,13 +1,8 @@
 package se.rosenbaum.poppoc.core;
 
-import org.bitcoinj.core.AbstractWalletEventListener;
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.WalletEventListener;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.bitcoinj.core.*;
+import org.bitcoinj.core.Wallet.SendRequest;
 import org.bitcoinj.kits.WalletAppKit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,12 +14,16 @@ import javax.servlet.annotation.WebListener;
 import java.io.File;
 import java.util.List;
 
+import static org.bitcoinj.core.Wallet.BalanceType.AVAILABLE;
+import static org.bitcoinj.core.Wallet.BalanceType.ESTIMATED;
+
 @WebListener
 public class Wallet implements ServletContextListener {
     private Logger logger = LoggerFactory.getLogger(Wallet.class);
     private WalletAppKit walletAppKit;
     private Storage storage;
     private NetworkParameters params;
+    private Address addressToMoveIncomingFundsTo;
 
     public void start(File walletDirectory) {
         walletAppKit = new WalletAppKit(params, walletDirectory, "pop" + params.getClass().getSimpleName());
@@ -37,16 +36,37 @@ public class Wallet implements ServletContextListener {
                     Address address = output.getAddressFromP2PKHScript(params);
                     storage.storePayment(address);
                 }
+                sendFunds();
             }
         };
 
         walletAppKit.startAsync().awaitRunning();
         walletAppKit.wallet().addEventListener(walletEventListener);
+        sendFunds();
+    }
 
+    private void sendFunds() {
+        if (addressToMoveIncomingFundsTo != null) {
+            org.bitcoinj.core.Wallet wallet = walletAppKit.wallet();
+            if (Coin.valueOf(1000000).isGreaterThan(wallet.getBalance(AVAILABLE))) {
+                // No use in sending tiny (< 10 mBTC) amounts.
+                return;
+            }
+            SendRequest sendRequest = SendRequest.emptyWallet(addressToMoveIncomingFundsTo);
+            try {
+                wallet.sendCoins(sendRequest);
+            } catch (InsufficientMoneyException e) {
+                logger.info("Could not empty wallet due to insufficient funds.", e);
+            } catch (Exception e) {
+                logger.info("Could not empty wallet due to exception", e);
+            }
+        }
     }
 
     public void stop() {
-        walletAppKit.stopAsync().awaitTerminated();
+        if (walletAppKit != null) {
+            walletAppKit.stopAsync().awaitTerminated();
+        }
     }
 
     public Address currentReceiveAddress() {
@@ -58,19 +78,26 @@ public class Wallet implements ServletContextListener {
         return walletAppKit.wallet().getTransaction(txid);
     }
 
+    public boolean isForMe(Transaction transaction) {
+        return transaction.getValue(walletAppKit.wallet()).isGreaterThan(Coin.ZERO);
+    }
+
     public void contextInitialized(ServletContextEvent servletContextEvent) {
-        logger.debug("initialized");
+        logger.debug("Wallet initializing");
         ServletContext context = servletContextEvent.getServletContext();
         this.storage = (Storage) context.getAttribute("storage");
         Config config = (Config)context.getAttribute("config");
         params = config.getNetworkParameters();
+        addressToMoveIncomingFundsTo = config.getAddressToSendFundsTo();
         start(config.getWalletDirectory());
         context.setAttribute("wallet", this);
+        logger.debug("Wallet initialized");
     }
 
     public void contextDestroyed(ServletContextEvent servletContextEvent) {
-        logger.debug("destroyed");
+        logger.debug("Wallet destroying");
         stop();
+        logger.debug("Wallet destroyed");
     }
 
 }

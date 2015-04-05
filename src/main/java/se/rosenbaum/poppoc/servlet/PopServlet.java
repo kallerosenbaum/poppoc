@@ -162,6 +162,13 @@ public class PopServlet extends BasicServlet {
     }
 
     private void checkPaysForCorrectService(PopRequest popRequest, Transaction blockchainTx) throws InvalidPopException {
+        if (popRequest.getServiceId() == 1000) {
+            // Special serviceId 1000. Any payment that is for me will do.
+            if (!getWallet().isForMe(blockchainTx)) {
+                throw new InvalidPopException("Transaction " + blockchainTx.getHashAsString() + " is not for me");
+            }
+            return;
+        }
         NetworkParameters networkParameters = getConfig().getNetworkParameters();
         boolean paysForCorrectService = false;
         for (TransactionOutput transactionOutput : blockchainTx.getOutputs()) {
