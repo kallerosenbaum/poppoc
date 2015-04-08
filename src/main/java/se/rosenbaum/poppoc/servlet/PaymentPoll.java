@@ -2,6 +2,7 @@ package se.rosenbaum.poppoc.servlet;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
+import se.rosenbaum.poppoc.core.ClientException;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -15,13 +16,13 @@ public class PaymentPoll extends BasicServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String addressString = request.getParameter(JspConst.RECEIVE_ADDRESS.val());
         if (addressString == null) {
-            throw new RuntimeException("No address in poll!");
+            throw new ClientException("No address in poll!");
         }
         Address address;
         try {
             address = new Address(getConfig().getNetworkParameters(), addressString);
         } catch (AddressFormatException e) {
-            throw new RuntimeException("Address " + addressString + " not parsable", e);
+            throw new ClientException("Address " + addressString + " not parsable", e);
         }
 
         Integer serviceId = getStorage().getServiceIdForPayment(address);

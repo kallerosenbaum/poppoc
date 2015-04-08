@@ -2,6 +2,7 @@ package se.rosenbaum.poppoc.servlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.rosenbaum.poppoc.core.ClientException;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -16,8 +17,7 @@ public class AuthenticateToService extends PopRequestServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String serviceIdString = request.getParameter(JspConst.SERVICE_ID.val());
         if (!isSet(serviceIdString)) {
-            logger.error("serviceId is empty or null");
-            throw new RuntimeException("ServiceId is null or empty");
+            throw new ClientException("ServiceId is null or empty");
         }
         int serviceId = Integer.parseInt(serviceIdString);
         createPopRequest(request, response, serviceId, null, null, "service" + serviceId);

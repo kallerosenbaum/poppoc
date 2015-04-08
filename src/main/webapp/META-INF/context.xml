@@ -6,7 +6,7 @@
                description="org.bitcoin.production or org.bitcoin.test"/>
 
     <Parameter name="popDesitnation"
-               value="http://192.168.1.171:8080"
+               value="http://192.168.1.7:8080"
                override="false"
                description="URL excluding the context part to where the PoPs should be sent"/>
 

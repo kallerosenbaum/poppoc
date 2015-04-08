@@ -3,6 +3,7 @@ package se.rosenbaum.poppoc.servlet;
 import org.bitcoinj.core.Address;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.rosenbaum.poppoc.core.ClientException;
 import se.rosenbaum.poppoc.core.Storage;
 import se.rosenbaum.poppoc.core.Wallet;
 
@@ -21,8 +22,7 @@ public class RequestPayment extends BasicServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String serviceIdString = request.getParameter(JspConst.SERVICE_ID.val());
         if (serviceIdString == null || "".equals(serviceIdString.trim())) {
-            logger.error("serviceId is empty or null");
-            throw new RuntimeException("ServiceId is null or empty");
+            throw new ClientException("ServiceId is null or empty");
         }
         int serviceId = Integer.parseInt(serviceIdString);
 

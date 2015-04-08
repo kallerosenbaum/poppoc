@@ -2,6 +2,7 @@ package se.rosenbaum.poppoc.servlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.rosenbaum.poppoc.core.ClientException;
 import se.rosenbaum.poppoc.core.Storage;
 
 import javax.servlet.ServletException;
@@ -18,15 +19,13 @@ public class PopPoll extends BasicServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String requestIdString = request.getParameter(JspConst.REQUEST_ID.val());
         if (requestIdString == null) {
-            logger.error("No requestId");
-            throw new RuntimeException("No requestId");
+            throw new ClientException("No requestId");
         }
         int requestId;
         try {
             requestId = Integer.parseInt(requestIdString);
         } catch (NumberFormatException e) {
-            logger.error("Malformed requestId {}", requestIdString);
-            throw new RuntimeException("Malformed requestId: " + requestIdString, e);
+            throw new ClientException("Malformed requestId: " + requestIdString, e);
         }
         HttpSession session = getSession(request);
         checkSessionPopRequestId(session, requestId);
@@ -47,8 +46,7 @@ public class PopPoll extends BasicServlet {
     private HttpSession getSession(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session == null) {
-            logger.error("No active session");
-            throw new RuntimeException("No active session");
+            throw new ClientException("No active session");
         }
         return session;
     }
@@ -57,8 +55,7 @@ public class PopPoll extends BasicServlet {
         Integer sessionRequestId = (Integer)session.getAttribute(SESSION_POP_REQUEST_ID);
         if (sessionRequestId == null || sessionRequestId != requestId) {
             String message = String.format("Wrong or missing requestId in session. Expected %s, got %s", requestId, sessionRequestId);
-            logger.error(message);
-            throw new RuntimeException(message);
+            throw new ClientException(message);
         }
     }
 }
