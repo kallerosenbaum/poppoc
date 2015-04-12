@@ -46,7 +46,7 @@ public class RequestPayment extends BasicServlet {
         request.setAttribute(JspConst.PAYMENT_URI.val(), paymentUri);
         request.setAttribute(JspConst.PAYMENT_URI_URL_ENCODED.val(), urlEncode(paymentUri));
         request.setAttribute(JspConst.PAYMENT_POLL_URL.val(), pollUrl);
-        RequestDispatcher requestDispatcher = request.getRequestDispatcher("/requestPayment.jsp");
+        RequestDispatcher requestDispatcher = request.getRequestDispatcher("/WEB-INF/requestPayment.jsp");
         requestDispatcher.forward(request, response);
     }
 

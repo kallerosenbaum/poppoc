@@ -24,7 +24,7 @@ public class Service extends BasicServlet {
         }
         request.setAttribute(JspConst.SERVICE_ID.val(), serviceId);
 
-        RequestDispatcher requestDispatcher = request.getRequestDispatcher("/service.jsp");
+        RequestDispatcher requestDispatcher = request.getRequestDispatcher("/WEB-INF/service.jsp");
         requestDispatcher.forward(request, response);
     }
 

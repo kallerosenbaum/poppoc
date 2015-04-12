@@ -35,7 +35,7 @@ public class PopRequestServlet extends BasicServlet {
         request.setAttribute(JspConst.SERVICE_ID.val(), serviceId);
         HttpSession session = request.getSession(true);
         session.setAttribute(SESSION_POP_REQUEST_ID, requestId);
-        RequestDispatcher requestDispatcher = request.getRequestDispatcher("/popRequest.jsp");
+        RequestDispatcher requestDispatcher = request.getRequestDispatcher("/WEB-INF/popRequest.jsp");
         requestDispatcher.forward(request, response);
     }
 

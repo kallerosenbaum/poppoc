@@ -1,7 +1,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <html>
 <head>
-    <script src="js/jquery-2.1.3.js"></script>
+    <script src="../js/jquery-2.1.3.js"></script>
     <script>
         function pollPayment() {
             $.ajax({

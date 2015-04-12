@@ -33,6 +33,7 @@ public class ErrorHandler extends HttpServlet {
             String message = String.format("StatusCode: %s, servletUri: %s, requestIri: %s", statusCode, servletName, requestUri);
             logger.error(message, exception);
         }
+
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
