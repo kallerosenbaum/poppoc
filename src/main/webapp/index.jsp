@@ -19,6 +19,6 @@ prefer to build it yourself.<br/>
 <a href="Service?serviceId=1">Use service</a><br/>
 <br />
 
-<a href="/static/mbw-testnet-release-unsigned-2.3.0build23007.apk">Bitcoin wallet for testnet</a>
+<a href="/static/mbw-testnet-debug-2.3.0build23007.apk">Bitcoin wallet for testnet</a>
 </body>
 </html>
