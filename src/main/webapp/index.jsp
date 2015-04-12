@@ -7,18 +7,16 @@
 
 This site is only using testnet for bitcoin transactions. <br/>
 
-There are 2 services on this site, service 1 and service 2. Each service costs any amount of bitcoin.
-To try this out, use the wallet apk linked to at the bottom of this page or build it
-<a href="https://github.com/kallerosenbaum/bitcoin-wallet">from source</a>.<br/>
+To access this dummy service you pay any amount by clicking on the links below. The source code
+for this server is avaliable at <a href="https://github.com/kallerosenbaum/poppoc">GitHub</a>.
+
+To try this out, use the apk linked to at the bottom of this page. The apk is a fork of Mycelium. This
+fork is also available at <a href="https://github.com/kallerosenbaum/bitcoin-wallet">GitHub</a> if you
+prefer to build it yourself.<br/>
 <br />
-<a href="RequestPayment?serviceId=1&label=service1">Pay for service 1</a><br />
-<a href="RequestPayment?serviceId=2&label=service2">Pay for service 2</a><br />
+<a href="RequestPayment?serviceId=1&label=service1">Pay for service</a><br />
 <br />
-<a href="AuthenticateToService?serviceId=1">Authenticate to service 1</a><br/>
-<a href="AuthenticateToService?serviceId=2">Authenticate to service 2</a><br/>
-<br />
-<a href="Service?serviceId=1">Use service 1</a><br/>
-<a href="Service?serviceId=2">Use service 2</a><br/>
+<a href="Service?serviceId=1">Use service</a><br/>
 <br />
 
 <a href="bitcoin-wallet.apk">Bitcoin wallet</a>

@@ -23,7 +23,7 @@
 </head>
 
 <body>
-
+    <h1>Pay</h1>
     Please pay any amount to:<br/>
     <a href="<c:out value="${paymentUri}"/>"><c:out value="${paymentUri}"/></a><br/>
 
@@ -33,7 +33,11 @@
         Waiting for payment...
     </div>
     <div id="useServiceLink" style="visibility: hidden">
-        Now <a href="${pageContext.request.contextPath}/Service?serviceId=${serviceId}">use the service</a>
+        Now <a href="${pageContext.request.contextPath}/Service?serviceId=${serviceId}">use the service</a>.
+        <p>
+            Note that in a real-world service you should probably already be logged in by now, but since I
+            want to demonstrate Proof of Payment you need to log in using PoP by following the link above.
+        </p>
     </div>
 </body>
 </html>
