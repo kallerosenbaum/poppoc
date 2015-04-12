@@ -27,15 +27,15 @@
 </head>
 
 <body>
-    Pop request:<br/>
+    <h1>Log in using Proof of Payment</h1>
 
     <img src="GenerateQRCode?popRequest=${popRequestUrlEncoded}"/><br/>
 
     <a href="${popRequest}">${popRequest}</a><br/>
 
+    <p>
     Have you not paid yet? <a href="${pageContext.request.contextPath}/RequestPayment?serviceId=${serviceId}&label=service${serviceId}">Pay here</a>
-
-    <b/>
+    </p>
     <div id="status">
         Waiting for PoP...
     </div>

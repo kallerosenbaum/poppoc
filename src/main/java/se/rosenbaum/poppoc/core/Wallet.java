@@ -69,8 +69,8 @@ public class Wallet implements ServletContextListener {
         }
     }
 
-    public Address currentReceiveAddress() {
-        return walletAppKit.wallet().currentReceiveAddress();
+    public Address getNewReceiveAddress() {
+        return walletAppKit.wallet().freshReceiveAddress();
     }
 
     public Transaction getTransaction(Sha256Hash txid) {

@@ -27,7 +27,7 @@ public class RequestPayment extends BasicServlet {
         int serviceId = Integer.parseInt(serviceIdString);
 
         Wallet wallet = getWallet();
-        Address address = wallet.currentReceiveAddress();
+        Address address = wallet.getNewReceiveAddress();
         logger.debug("Generating address {}", address.toString());
 
         String paymentUri = "bitcoin:" + urlEncode(address.toString());
