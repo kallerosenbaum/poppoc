@@ -145,9 +145,16 @@ public class PopServlet extends BasicServlet {
             try {
                 // connect the input to the right transaction:
 
-                Transaction inputTx = wallet.getTransaction(bcInput.getOutpoint().getHash());
+                Sha256Hash hash = bcInput.getOutpoint().getHash();
+                Transaction inputTx = wallet.getTransaction(hash);
                 if (inputTx == null) {
-                    String message = "Could not find input tx: " + bcInput.getOutpoint().getHash();
+                    // Transaction i unknown to the wallet. Download it from a blockchain api service
+                    Config config = getConfig();
+                    TransactionDownloader downloader = new TransactionDownloader(config.getChainKeyId(), config.getChainKeySecret(), config.getChainUrl(), config.getNetworkParameters());
+                    inputTx = downloader.downloadTransaction(hash);
+                }
+                if (inputTx == null) {
+                    String message = "Could not find input tx: " + hash;
                     logger.debug(message);
                     throw new InvalidPopException(message);
                 }

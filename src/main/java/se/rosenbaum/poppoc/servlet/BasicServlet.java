@@ -1,10 +1,12 @@
 package se.rosenbaum.poppoc.servlet;
 
+import se.rosenbaum.poppoc.core.ClientException;
 import se.rosenbaum.poppoc.core.Config;
 import se.rosenbaum.poppoc.core.Storage;
 import se.rosenbaum.poppoc.core.Wallet;
 
 import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -18,6 +20,18 @@ import java.util.Map;
 public class BasicServlet extends HttpServlet {
     public static final String SESSION_POP_REQUEST_ID = "popRequestId";
     private static final String SESSION_AUTHORIZED_FOR_SERVICE = "authorizedForService";
+
+    protected boolean isSet(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
+
+    protected int getServiceId(HttpServletRequest request) {
+        String serviceIdString = request.getParameter(JspConst.SERVICE_ID.val());
+        if (!isSet(serviceIdString)) {
+            throw new ClientException("ServiceId is null or empty");
+        }
+        return Integer.parseInt(serviceIdString);
+    }
 
     public enum JspConst {
 
@@ -53,6 +67,9 @@ public class BasicServlet extends HttpServlet {
     }
 
     protected void removeServiceFromSession(HttpSession session, int serviceId) {
+        if (session == null) {
+            return;
+        }
         session.removeAttribute(SESSION_AUTHORIZED_FOR_SERVICE + serviceId);
     }
 

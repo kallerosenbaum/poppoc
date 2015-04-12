@@ -15,11 +15,8 @@ public class AuthenticateToService extends PopRequestServlet {
     private Logger logger = LoggerFactory.getLogger(AuthenticateToService.class);
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String serviceIdString = request.getParameter(JspConst.SERVICE_ID.val());
-        if (!isSet(serviceIdString)) {
-            throw new ClientException("ServiceId is null or empty");
-        }
-        int serviceId = Integer.parseInt(serviceIdString);
+        int serviceId = getServiceId(request);
         createPopRequest(request, response, serviceId, null, null, "service" + serviceId);
     }
+
 }

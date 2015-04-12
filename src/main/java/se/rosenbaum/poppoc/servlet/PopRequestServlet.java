@@ -1,6 +1,7 @@
 package se.rosenbaum.poppoc.servlet;
 
 import org.bitcoinj.core.Coin;
+import se.rosenbaum.poppoc.core.ClientException;
 import se.rosenbaum.poppoc.core.PopRequest;
 import se.rosenbaum.poppoc.core.Storage;
 
@@ -79,10 +80,6 @@ public class PopRequestServlet extends BasicServlet {
         popRequest.setText(text);
         popRequest.setTxid(txid);
         return popRequest;
-    }
-
-    protected boolean isSet(String value) {
-        return value != null && !value.trim().isEmpty();
     }
 
 
