@@ -1,6 +1,5 @@
 package se.rosenbaum.poppoc.core;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import org.bitcoinj.core.*;
 import org.bitcoinj.core.Wallet.SendRequest;
 import org.bitcoinj.kits.WalletAppKit;
@@ -15,7 +14,6 @@ import java.io.File;
 import java.util.List;
 
 import static org.bitcoinj.core.Wallet.BalanceType.AVAILABLE;
-import static org.bitcoinj.core.Wallet.BalanceType.ESTIMATED;
 
 @WebListener
 public class Wallet implements ServletContextListener {
@@ -46,14 +44,18 @@ public class Wallet implements ServletContextListener {
     }
 
     private void sendFunds() {
+        logger.debug("ENTER");
         if (addressToMoveIncomingFundsTo != null) {
             org.bitcoinj.core.Wallet wallet = walletAppKit.wallet();
-            if (Coin.valueOf(1000000).isGreaterThan(wallet.getBalance(AVAILABLE))) {
+            Coin balance = wallet.getBalance(AVAILABLE);
+            if (Coin.valueOf(1000000).isGreaterThan(balance)) {
                 // No use in sending tiny (< 10 mBTC) amounts.
+                logger.info("Will not send funds. To small balance: " + balance.toFriendlyString());
                 return;
             }
             SendRequest sendRequest = SendRequest.emptyWallet(addressToMoveIncomingFundsTo);
             try {
+                logger.info("Sending balance: " + balance.toFriendlyString());
                 wallet.sendCoins(sendRequest);
             } catch (InsufficientMoneyException e) {
                 logger.info("Could not empty wallet due to insufficient funds.", e);

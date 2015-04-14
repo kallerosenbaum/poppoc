@@ -1,7 +1,6 @@
 package se.rosenbaum.poppoc.servlet;
 
 import org.bitcoinj.core.Coin;
-import se.rosenbaum.poppoc.core.ClientException;
 import se.rosenbaum.poppoc.core.PopRequest;
 import se.rosenbaum.poppoc.core.Storage;
 

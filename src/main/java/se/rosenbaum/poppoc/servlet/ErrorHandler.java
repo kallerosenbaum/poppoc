@@ -28,7 +28,6 @@ public class ErrorHandler extends HttpServlet {
             // No error logging.
             String message = String.format("StatusCode: %s, servletUri: %s, requestIri: %s", statusCode, servletName, requestUri);
             logger.debug(message, exception);
-            logger.info(message);
         } else {
             String message = String.format("StatusCode: %s, servletUri: %s, requestIri: %s", statusCode, servletName, requestUri);
             logger.error(message, exception);

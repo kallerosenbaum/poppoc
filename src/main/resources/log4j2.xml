@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
     <Appenders>
-        <File name="A1" fileName="${sys:catalina.home}/logs/poppoc.log" append="false">
-            <PatternLayout pattern="%t %-5p %c{2} - %m%n"/>
+        <File name="poppocLog" fileName="${sys:catalina.home}/logs/poppoc.log" append="false">
+            <PatternLayout pattern="%d %-5p %c{1.} (%F:%L) - %m%n"/>
         </File>
         <Console name="STDOUT" target="SYSTEM_OUT">
             <PatternLayout pattern="%d %-5p [%t] %C{2} (%F:%L) - %m%n"/>
@@ -10,10 +10,10 @@
     </Appenders>
     <Loggers>
         <Logger name="se.rosenbaum" level="debug">
-            <AppenderRef ref="A1"/>
+            <AppenderRef ref="poppocLog"/>
         </Logger>
         <Root level="info">
-            <AppenderRef ref="STDOUT"/>
+            <AppenderRef ref="poppocLog"/>
         </Root>
     </Loggers>
 </Configuration>
