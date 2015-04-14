@@ -97,7 +97,7 @@ public class Config implements ServletContextListener {
         chainUrl = getConfigParameter(context, Param.CHAIN_URL);
         chainKeyId = getConfigParameter(context, Param.CHAIN_KEY_ID);
         chainKeySecret = getConfigParameter(context, Param.CHAIN_KEY_SECRET);
-        logger.debug(toString());
+        logger.info(toString());
         context.setAttribute("config", this);
     }
 
