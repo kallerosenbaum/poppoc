@@ -21,7 +21,7 @@ public class TransactionDownloaderTest {
         sut = new TransactionDownloader(keyId, keySecret, "https://api.chain.com/v2", NetworkParameters.fromID("org.bitcoin.test"));
     }
 
-    @Test
+  //  @Test
     public void testDownloadTransaction() throws Exception {
         String hash = "052cefc014280d64b950bf278ae6e76b1e3ae187c3efdd80420fbfe489cb40c0";
         Transaction transaction = sut.downloadTransaction(new Sha256Hash(hash));

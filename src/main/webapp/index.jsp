@@ -3,26 +3,16 @@
 
 </head>
 <body>
-<h1>Welcome to the Proof of Payment POC.</h1>
+<h1>Welcome to the Proof of Payment demo service.</h1>
+<p>For more information regarding this system and to download a PoP enabled android wallet,
+    see <a href="/static/">main page</a>.
+<p>
+The process is simple:
+<ol>
+<li><a href="RequestPayment?serviceId=1&label=service1">Pay for the service<a>. You will get 24h access to the service.</li>
+<li><a href="Service?serviceId=1">Log in</a> to the service.</li>
+<li>Awesomeness!</li>
+</ol>
 
-<p>
-This site is using testnet.
-</p>
-<p>
-To access this dummy service you pay any amount by clicking on the links below. The source code
-for this server is avaliable at <a href="https://github.com/kallerosenbaum/poppoc">GitHub</a>.
-</p>
-<p>
-To try this out, use the apk linked to at the bottom of this page. The apk is a fork of Mycelium. This
-fork is also available at <a href="https://github.com/kallerosenbaum/bitcoin-wallet">GitHub</a> if you
-prefer to build it yourself.
-</p>
-<br />
-<a href="RequestPayment?serviceId=1&label=service1">Pay for service</a><br />
-<br />
-<a href="Service?serviceId=1">Use service</a><br/>
-<br />
-
-<a href="/static/mbw-testnet-debug-2.3.0build23007.apk">Bitcoin wallet for testnet</a>
 </body>
 </html>

@@ -14,4 +14,8 @@
         <location>/ErrorHandler/</location>
     </error-page>
 
+    <context-param>
+        <param-name>log4jContextName</param-name>
+        <param-value>poppocLogContextName</param-value>
+    </context-param>
 </web-app>
