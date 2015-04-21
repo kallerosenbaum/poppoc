@@ -1,5 +1,5 @@
 <infinispan>
-    <cache-container default-cache="defaultCache">
+    <cache-container default-cache="defaultCache" statistics="true" name="${cache.manager.name}">
         <local-cache name="defaultCache">
             <eviction strategy="LRU" max-entries="1024"/>
             <expiration lifespan="3600000"/>

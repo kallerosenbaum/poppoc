@@ -1,7 +1,6 @@
 package se.rosenbaum.poppoc.core;
 
 import org.bitcoinj.core.Address;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +9,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -20,7 +18,7 @@ public class Storage implements ServletContextListener {
 
     private AtomicInteger id = new AtomicInteger(0);
 
-    CacheContainer cacheManager;
+    DefaultCacheManager cacheManager;
     private Map<Address, Integer> paymentRequests; // paymentAddress -> serviceId
     private Map<Address, Integer> paidServices;    // paymentAddress -> serviceId
     private Map<Integer, PopRequest> popRequests; // requestId      -> PopRequest
@@ -98,6 +96,7 @@ public class Storage implements ServletContextListener {
         ServletContext servletContext = servletContextEvent.getServletContext();
         Config config = (Config)servletContext.getAttribute("config");
         System.setProperty("cache.data.store", config.getCachePersistenceDirectory().getAbsolutePath());
+        System.setProperty("cache.manager.name", servletContext.getContextPath());
         try {
             cacheManager = new DefaultCacheManager("infinispan.xml");
         } catch (IOException e) {
