@@ -5,7 +5,7 @@
 <body>
 <h1>Welcome to the Proof of Payment demo service.</h1>
 <p>For more information regarding this system and to download a PoP enabled android wallet,
-    see <a href="/static/">main page</a>.
+    see <a href="/">main page</a>.
 <p>
 The process is simple:
 <ol>
