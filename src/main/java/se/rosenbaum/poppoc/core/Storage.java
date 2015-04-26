@@ -12,6 +12,20 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * This class is used from various places. The purpose is to keep storage related
+ * information hidden from the caller. Right now it uses infinispan caches
+ * to store payment requests, received payements, PoP requests and so on. The
+ * lifecycles of the elements in the caches are set in infinispan.xml.
+ * The usage of this class is outlined in 7 steps as javadoc comments on the methods
+ * in this class.
+ *
+ * Other implementations of Storage is of course possible. It could be an SQL database
+ * for example. If more implementations are needed, just make this an interface instead and
+ * push down the members to a subclass, InfinispanStorage. Then you can write SQLStorage, or
+ * whatever
+ */
+// TODO: Make this class transactional
 public class Storage implements ServletContextListener {
 
     private Logger logger = LoggerFactory.getLogger(Storage.class);
@@ -21,8 +35,8 @@ public class Storage implements ServletContextListener {
     DefaultCacheManager cacheManager;
     private Map<Address, Integer> paymentRequests; // paymentAddress -> serviceId
     private Map<Address, Integer> paidServices;    // paymentAddress -> serviceId
-    private Map<Integer, PopRequest> popRequests; // requestId      -> PopRequest
-    private Map<Integer, Integer> verifiedPops;   // requestId      -> serviceId
+    private Map<Integer, PopRequest> popRequests;  // requestId      -> PopRequest
+    private Map<Integer, Integer> verifiedPops;    // requestId      -> serviceId
 
     /**
      * Step 1: request a payment and associate the paymentAddress with the serviceId

@@ -32,6 +32,7 @@ public class Wallet implements ServletContextListener {
                 List<TransactionOutput> outputs = tx.getOutputs();
                 for (TransactionOutput output : outputs) {
                     Address address = output.getAddressFromP2PKHScript(params);
+                    logger.info("Payment received. Value: {} Txid: {}", tx.getValueSentToMe(wallet), tx.getHash());
                     storage.storePayment(address);
                 }
                 sendFunds();

@@ -12,12 +12,12 @@
                         $('#status').html("Pop received.");
                         window.location.href = "${pageContext.request.contextPath}/Service?serviceId=${serviceId}";
                     } else {
-                        setTimeout(pollPayment, 3000);
+                        setTimeout(pollPayment, 500);
                     }
                 },
                 error : function(jqXHR, textStatus, errorThrown ) {
                     $('#status').html(textStatus + ': ' + errorThrown + '. Retrying...');
-                    setTimeout(pollPayment, 3000);
+                    setTimeout(pollPayment, 500);
                 },
                 dataType : "text"
             });

@@ -12,7 +12,7 @@
                         $('#status').html('Payment received.');
                         $('#useServiceLink').css("visibility", "visible");
                     } else {
-                        setTimeout(pollPayment, 3000);
+                        setTimeout(pollPayment, 500);
                     }
                 },
                 dataType : 'text'

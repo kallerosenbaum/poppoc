@@ -111,11 +111,15 @@ public class PopServlet extends BasicServlet {
             if (!txid.toString().equals(popRequest.getTxid())) {
                 throw new InvalidPopException("Wrong transaction");
             }
-        } else {
-            // Check if txid actually paid for the service requested.
-            // A bit hard to implement, so skipping for now.
         }
+
+        // Here we should check more hints, for example that the hint amount
+        // actually equals the amount in txid.
+        // Not imlemented here right now.
+
         checkProvedTransaction(wallet, pop, popRequest, txid);
+        // No exceptions, means PoP valid.
+        logger.info("Valid PoP for txid {} received.", txid);
     }
 
     private void checkProvedTransaction(Wallet wallet, Pop pop, PopRequest popRequest, Sha256Hash txid) throws InvalidPopException {

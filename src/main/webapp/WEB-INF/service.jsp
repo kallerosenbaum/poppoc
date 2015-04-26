@@ -4,8 +4,8 @@
     <title>Success</title>
 </head>
 <body>
-  <h1>Yay!</h1>
-  You have successfully authenticated to this service through Proof of Payment.
+  <h1>Awesome!</h1>
+  You have authenticated to this service through Proof of Payment.
 <form action="Logout">
     <input type="hidden" name="serviceId" value="${serviceId}"/>
     <input type="submit" value="Log out"/>
