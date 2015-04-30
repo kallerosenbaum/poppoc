@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.rosenbaum.poppoc.core.*;
 import se.rosenbaum.poppoc.core.Wallet;
+import se.rosenbaum.poppoc.service.ServiceType;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
@@ -173,13 +174,6 @@ public class PopServlet extends BasicServlet {
     }
 
     private void checkPaysForCorrectService(PopRequest popRequest, Transaction blockchainTx) throws InvalidPopException {
-        if (popRequest.getServiceId() == 1000) {
-            // Special serviceId 1000. Any payment that is for me will do.
-            if (!getWallet().isForMe(blockchainTx)) {
-                throw new InvalidPopException("Transaction " + blockchainTx.getHashAsString() + " is not for me");
-            }
-            return;
-        }
         NetworkParameters networkParameters = getConfig().getNetworkParameters();
         boolean paysForCorrectService = false;
         for (TransactionOutput transactionOutput : blockchainTx.getOutputs()) {
@@ -190,14 +184,14 @@ public class PopServlet extends BasicServlet {
                     continue; // No address found here, try the next output
                 }
             }
-            Integer serviceIdForPayment = getStorage().getServiceIdForPayment(outputAddress);
-            if (serviceIdForPayment != null && serviceIdForPayment.equals(popRequest.getServiceId())) {
+            ServiceType serviceIdForPayment = getStorage().getServiceIdForPayment(outputAddress);
+            if (serviceIdForPayment != null && serviceIdForPayment.getServiceId() == popRequest.getServiceType().getServiceId()) {
                 paysForCorrectService = true;
                 break;
             }
         }
         if (!paysForCorrectService) {
-            throw new InvalidPopException("Proven transaction does not pay for serviceId " + popRequest.getServiceId());
+            throw new InvalidPopException("Proven transaction does not pay for serviceId " + popRequest.getServiceType());
         }
     }
 

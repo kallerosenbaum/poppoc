@@ -10,6 +10,9 @@
                 success : function(data) {
                     if (data === 'PAYMENT RECEIVED') {
                         $('#status').html('Payment received.');
+                        <c:if test="${not empty serviceType.paymentCallback}">
+                            document.href = ${serviceType.paymentCallback};
+                        </c:if>
                         $('#useServiceLink').css("visibility", "visible");
                     } else {
                         setTimeout(pollPayment, 500);
@@ -24,7 +27,7 @@
 
 <body>
     <h1>Pay</h1>
-    Please pay any amount to:<br/>
+    Please pay ${serviceType.priceTag} to:<br/>
     <a href="<c:out value="${paymentUri}"/>"><c:out value="${paymentUri}"/></a><br/>
 
     <img src="GenerateQRCode?popRequest=<c:out value="${paymentUriUrlEncoded}"/>"/><br/>
@@ -33,7 +36,7 @@
         Waiting for payment...
     </div>
     <div id="useServiceLink" style="visibility: hidden">
-        Now <a href="${pageContext.request.contextPath}/Service?serviceId=${serviceId}">use the service</a>.
+        Now <a href="${pageContext.request.contextPath}/Service?serviceId=${serviceType.serviceId}">use the service</a>.
         <p>
             Note that in a real-world service you should probably already be logged in by now, but since I
             want to demonstrate Proof of Payment you need to log in using PoP by following the link above.

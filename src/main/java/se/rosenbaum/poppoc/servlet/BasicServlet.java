@@ -47,7 +47,9 @@ public class BasicServlet extends HttpServlet {
         POP_POLL_URL("popPollUrl"),
         PAYMENT_RECEIVED("PAYMENT RECEIVED"),
         PAYMENT_NOT_RECEIVED_YET("PAYMENT NOT RECEIVED YET"),
-        REQUEST_ID("requestId");
+        REQUEST_ID("requestId"),
+        SERVICE_TYPE("serviceType"),
+        CALLBACK_URL("callbackUrl");
 
         private String value;
 

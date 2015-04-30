@@ -4,12 +4,15 @@ import org.bitcoinj.core.Address;
 import org.infinispan.manager.DefaultCacheManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.rosenbaum.poppoc.service.ServiceType;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -33,36 +36,39 @@ public class Storage implements ServletContextListener {
     private AtomicInteger id = new AtomicInteger(0);
 
     DefaultCacheManager cacheManager;
-    private Map<Address, Integer> paymentRequests; // paymentAddress -> serviceId
-    private Map<Address, Integer> paidServices;    // paymentAddress -> serviceId
-    private Map<Integer, PopRequest> popRequests;  // requestId      -> PopRequest
-    private Map<Integer, Integer> verifiedPops;    // requestId      -> serviceId
+    private Map<Address, ServiceType> paymentRequests; // paymentAddress -> serviceType
+    private Map<Address, ServiceType> paidServices;    // paymentAddress -> serviceType
+    private Map<Integer, PopRequest> popRequests;      // requestId      -> PopRequest
+    private Map<Integer, ServiceType> verifiedPops;    // requestId      -> serviceType
 
     /**
-     * Step 1: request a payment and associate the paymentAddress with the serviceId
+     * Step 1: request a payment and associate the paymentAddress with the serviceType
      */
-    public void storePendingPayment(Address paymentAddress, int serviceId) {
-        paymentRequests.put(paymentAddress, serviceId);
+    public void storePendingPayment(Address paymentAddress, ServiceType serviceType) {
+        paymentRequests.put(paymentAddress, serviceType);
     }
 
     /**
-     * Step 2: Find the serviceId associated with the paymentAddress. If found,
-     * move the record to paidServices. Return the serviceId paid for,
+     * Step 2: Find the serviceType associated with the paymentAddress. If found,
+     * move the record to paidServices. Return the serviceType paid for,
      */
-    public Integer storePayment(Address paymentAddress) {
-        Integer serviceId = paymentRequests.get(paymentAddress);
-        if (serviceId != null) {
-            paidServices.put(paymentAddress, serviceId);
-            paymentRequests.remove(paymentAddress);
+    public ServiceType storePayment(Address paymentAddress, long satoshis) {
+        ServiceType serviceType = paymentRequests.get(paymentAddress);
+        if (serviceType != null) {
+            serviceType.addPayment(satoshis);
+            if (serviceType.isPaidFor()) {
+                paidServices.put(paymentAddress, serviceType);
+                paymentRequests.remove(paymentAddress);
+            }
         }
-        return serviceId;
+        return serviceType;
     }
 
     /**
      * Step 3: Check that we have received a payment to a certain address. This is done
      * to notify the user that the payment is received.
      */
-    public Integer getServiceIdForPayment(Address address) {
+    public ServiceType getServiceIdForPayment(Address address) {
         return paidServices.get(address);
     }
 
@@ -94,15 +100,15 @@ public class Storage implements ServletContextListener {
         if (popRequest == null && verifiedPops.get(requestId) == null) {
             return; // The pop request was invalidated (too old) while verifying the pop.
         }
-        verifiedPops.put(requestId, popRequest.getServiceId());
+        verifiedPops.put(requestId, popRequest.getServiceType());
     }
 
     /**
      * Step 7: Check if the PopRequest with the specified requestId has been successfully fulfilled.
      */
-    public Integer removeVerifiedPop(int requestId) {
-        Integer serviceId = verifiedPops.remove(requestId);
-        return serviceId;
+    public ServiceType removeVerifiedPop(int requestId) {
+        ServiceType serviceType = verifiedPops.remove(requestId);
+        return serviceType;
     }
 
     public void contextInitialized(ServletContextEvent servletContextEvent) {
@@ -146,5 +152,12 @@ public class Storage implements ServletContextListener {
         if (cacheManager != null) {
             cacheManager.stop();
         }
+    }
+
+
+    Random random = new Random(System.currentTimeMillis());
+
+    public Long getUniqueLong() {
+        return random.nextLong();
     }
 }

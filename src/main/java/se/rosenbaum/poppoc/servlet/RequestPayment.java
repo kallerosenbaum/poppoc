@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 import se.rosenbaum.poppoc.core.ClientException;
 import se.rosenbaum.poppoc.core.Storage;
 import se.rosenbaum.poppoc.core.Wallet;
+import se.rosenbaum.poppoc.service.ServiceType;
+import se.rosenbaum.poppoc.service.ServiceTypeFactory;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -30,19 +32,17 @@ public class RequestPayment extends BasicServlet {
         Address address = wallet.getNewReceiveAddress();
         logger.debug("Generating address {}", address.toString());
 
-        String paymentUri = "bitcoin:" + urlEncode(address.toString());
+        ServiceType serviceType = new ServiceTypeFactory().createServiceType(serviceId);
+        serviceType.useParameters(request.getParameterMap());
 
-        paymentUri = appendParam(request, "amount", paymentUri);
-        paymentUri = appendParam(request, "label", paymentUri);
-        paymentUri = appendParam(request, "message", paymentUri);
-
+        String paymentUri = serviceType.getPaymentUri(address);
         Storage storage = getStorage();
-        storage.storePendingPayment(address, serviceId);
+        storage.storePendingPayment(address, serviceType);
 
         String pollUrl = getConfig().getPopDesitnation() + request.getContextPath() + "/PaymentPoll?" +
                 JspConst.RECEIVE_ADDRESS.val() + "=" + address;
 
-        request.setAttribute(JspConst.SERVICE_ID.val(), serviceId);
+        request.setAttribute(JspConst.SERVICE_TYPE.val(), serviceType);
         request.setAttribute(JspConst.PAYMENT_URI.val(), paymentUri);
         request.setAttribute(JspConst.PAYMENT_URI_URL_ENCODED.val(), urlEncode(paymentUri));
         request.setAttribute(JspConst.PAYMENT_POLL_URL.val(), pollUrl);

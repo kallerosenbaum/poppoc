@@ -1,6 +1,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <html>
 <head>
+    <title>Send Proof of Payment</title>
     <script src="${pageContext.request.contextPath}/js/jquery-2.1.3.js"></script>
     <script>
         function pollPayment() {
@@ -10,7 +11,11 @@
                 success : function(data) {
                     if (data === "VALID POP RECEIVED") {
                         $('#status').html("Pop received.");
-                        window.location.href = "${pageContext.request.contextPath}/Service?serviceId=${serviceId}";
+                        <c:if test="${not empty serviceType.popCallback}">
+                            document.href = "${serviceType.popCallback}";
+                        </c:if>
+
+                        window.location.href = "${pageContext.request.contextPath}/Service?serviceId=${serviceType.serviceId}";
                     } else {
                         setTimeout(pollPayment, 500);
                     }
@@ -34,7 +39,7 @@
     <a href="${popRequest}">${popRequest}</a><br/>
 
     <p>
-    Have you not paid yet? <a href="${pageContext.request.contextPath}/RequestPayment?serviceId=${serviceId}&label=service${serviceId}">Pay here</a>
+    Have you not paid yet? <a href="${pageContext.request.contextPath}/RequestPayment?serviceId=${serviceType.serviceId}&label=service${serviceType.serviceId}">Pay here</a>
     </p>
     <div id="status">
         Waiting for PoP...

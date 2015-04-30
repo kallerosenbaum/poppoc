@@ -3,6 +3,7 @@ package se.rosenbaum.poppoc.servlet;
 import org.bitcoinj.core.Coin;
 import se.rosenbaum.poppoc.core.PopRequest;
 import se.rosenbaum.poppoc.core.Storage;
+import se.rosenbaum.poppoc.service.ServiceType;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -17,12 +18,11 @@ import java.util.Random;
 
 public class PopRequestServlet extends BasicServlet {
 
-    protected void createPopRequest(HttpServletRequest request, HttpServletResponse response, int serviceId, String txid, Long amount, String text) throws ServletException, IOException {
-        PopRequest popRequest = createPopRequest(txid, amount, text, serviceId);
+    protected void createPopRequest(HttpServletRequest request, HttpServletResponse response, ServiceType serviceType) throws ServletException, IOException {
+        PopRequest popRequest = serviceType.getPopRequest();
 
         Storage storage = getStorage();
         int requestId = storage.store(popRequest);
-
 
         String contextPath = getServletContext().getContextPath();
         String popRequestUri = createPopRequestUri(popRequest, contextPath, requestId);
@@ -31,7 +31,7 @@ public class PopRequestServlet extends BasicServlet {
         request.setAttribute(JspConst.POP_REQUEST.val(), popRequestUri);
         request.setAttribute(JspConst.POP_REQUEST_URL_ENCODED.val(), urlEncode(popRequestUri));
         request.setAttribute(JspConst.POP_POLL_URL.val(), popPollUrl);
-        request.setAttribute(JspConst.SERVICE_ID.val(), serviceId);
+        request.setAttribute(JspConst.SERVICE_TYPE.val(), serviceType);
         HttpSession session = request.getSession(true);
         session.setAttribute(SESSION_POP_REQUEST_ID, requestId);
         RequestDispatcher requestDispatcher = request.getRequestDispatcher("/WEB-INF/popRequest.jsp");
@@ -64,7 +64,7 @@ public class PopRequestServlet extends BasicServlet {
         return popRequestUri;
     }
 
-    protected PopRequest createPopRequest(String txid, Long amount, String text, int serviceId) {
+    protected PopRequest createPopRequest(String txid, Long amount, String text, ServiceType serviceType) {
         Random random = new SecureRandom();
 
         byte[] nonceBytes = new byte[8];
@@ -74,7 +74,7 @@ public class PopRequestServlet extends BasicServlet {
         nonceBytes[2] = 0;
         long nonce = ByteBuffer.wrap(nonceBytes).getLong();
 
-        PopRequest popRequest = new PopRequest(nonce, serviceId);
+        PopRequest popRequest = new PopRequest(nonce, serviceType);
         popRequest.setAmount(amount);
         popRequest.setText(text);
         popRequest.setTxid(txid);

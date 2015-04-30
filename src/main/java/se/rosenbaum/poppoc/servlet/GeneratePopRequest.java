@@ -1,6 +1,7 @@
 package se.rosenbaum.poppoc.servlet;
 
 import org.bitcoinj.core.Coin;
+import se.rosenbaum.poppoc.service.ServiceTypeFactory;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -16,7 +17,7 @@ public class GeneratePopRequest extends PopRequestServlet {
         String amountString = getValue(request, "amount");
         Coin coin = amountString == null ? null : Coin.parseCoin(amountString);
         String text = getValue(request, "text");
-        createPopRequest(request, response, 1000, txid, coin.getValue(), text);
+        createPopRequest(request, response, new ServiceTypeFactory().createServiceType(1000));
     }
 
     private String getValue(HttpServletRequest request, String parameter) {

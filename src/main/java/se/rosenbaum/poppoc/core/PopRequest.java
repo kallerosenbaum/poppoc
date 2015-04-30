@@ -1,7 +1,8 @@
 package se.rosenbaum.poppoc.core;
 
+import se.rosenbaum.poppoc.service.ServiceType;
+
 import java.io.Serializable;
-import java.net.URLEncoder;
 
 public class PopRequest implements Serializable {
 
@@ -10,20 +11,20 @@ public class PopRequest implements Serializable {
     Long amount;
     String text;
 
-    int serviceId;
+    ServiceType serviceType;
 
-    public PopRequest(Long nonce, int serviceId) {
+    public PopRequest(Long nonce, ServiceType serviceType) {
         if (nonce == null) {
             throw new IllegalArgumentException("Nonce must not be null");
         }
         if (nonce < 0) {
             throw new IllegalArgumentException("Nonce must not be negative");
         }
-        if (serviceId < 1) {
-            throw new IllegalArgumentException("Service id must be >0, got " + serviceId);
+        if (serviceType == null) {
+            throw new IllegalArgumentException("ServiceType must not be null");
         }
         this.nonce = nonce;
-        this.serviceId = serviceId;
+        this.serviceType = serviceType;
     }
 
     public String getTxid() {
@@ -54,7 +55,7 @@ public class PopRequest implements Serializable {
         return nonce;
     }
 
-    public int getServiceId() {
-        return serviceId;
+    public ServiceType getServiceType() {
+        return serviceType;
     }
 }

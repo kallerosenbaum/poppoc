@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.rosenbaum.poppoc.core.ClientException;
 import se.rosenbaum.poppoc.core.Storage;
+import se.rosenbaum.poppoc.service.ServiceType;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -31,12 +32,12 @@ public class PopPoll extends BasicServlet {
         checkSessionPopRequestId(session, requestId);
 
         Storage storage = getStorage();
-        Integer serviceId = storage.removeVerifiedPop(requestId);
+        ServiceType serviceId = storage.removeVerifiedPop(requestId);
 
         response.setContentType("text/plain; charset=US-ASCII");
         if (serviceId != null) {
             session.removeAttribute(SESSION_POP_REQUEST_ID);
-            addServiceToSession(session, serviceId);
+            addServiceToSession(session, serviceId.getServiceId());
             response.getWriter().write(JspConst.VALID_POP_RECEIVED.val());
         } else {
             response.getWriter().write(JspConst.POP_NOT_RECEIVED_YET.val());

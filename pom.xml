@@ -66,6 +66,11 @@
             <version>${taglibs-standard-impl.version}</version>
         </dependency>
         <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
             <groupId>net.glxn.qrgen</groupId>
             <artifactId>javase</artifactId>
             <version>${qrgen.version}</version>
