@@ -46,6 +46,9 @@ public class PayMessService extends StandardService {
         if (messageSpaceText == null || messageSpaceText.isEmpty()) {
             throw new IllegalArgumentException("messageSpaceText must not be null or empty");
         }
+        if (messageSpaceText.length() > 140) {
+            throw new IllegalArgumentException("messageSpaceText must be less than 140 characters");
+        }
         Message message = new Message(messageSpaceText);
         messageSpace = new MessageSpace(messageSpaceId, message);
     }
@@ -89,5 +92,4 @@ public class PayMessService extends StandardService {
     public long getServiceTime() {
         return 365*24*60*60*1000; // 24h
     }
-
 }
