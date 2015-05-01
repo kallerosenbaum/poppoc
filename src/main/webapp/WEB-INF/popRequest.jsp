@@ -34,11 +34,8 @@
 
     <img src="GenerateQRCode?popRequest=${popRequestUrlEncoded}"/><br/>
 
-    <a href="${popRequest}">${popRequest}</a><br/>
+    <a href="${popRequest}">${popRequest}</a><br/><br/>
 
-    <p>
-    Have you not paid yet? <a href="${pageContext.request.contextPath}/RequestPayment?serviceId=${serviceType.serviceId}&label=service${serviceType.serviceId}">Pay here</a>
-    </p>
     <div id="status">
         Waiting for PoP...
     </div>
