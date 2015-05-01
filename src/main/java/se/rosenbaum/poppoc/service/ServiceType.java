@@ -33,4 +33,6 @@ public interface ServiceType extends Serializable {
     public boolean isSameServiceType(ServiceType serviceType);
 
     public void update(ServiceType nakedServiceType);
+
+    public long getServiceTime();
 }

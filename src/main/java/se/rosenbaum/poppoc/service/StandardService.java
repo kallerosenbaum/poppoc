@@ -64,4 +64,8 @@ public abstract class StandardService implements ServiceType {
     public void update(ServiceType nakedServiceType) {
 
     }
+
+    public long getServiceTime() {
+        return 24*60*60*1000; // 24h
+    }
 }

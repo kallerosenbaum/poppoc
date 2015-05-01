@@ -85,4 +85,9 @@ public class PayMessService extends StandardService {
         }
         messageSpace = ((PayMessService)nakedServiceType).messageSpace;
     }
+
+    public long getServiceTime() {
+        return 365*24*60*60*1000; // 24h
+    }
+
 }

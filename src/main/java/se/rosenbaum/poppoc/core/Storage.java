@@ -4,6 +4,7 @@ import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutput;
+import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -40,13 +42,13 @@ public class Storage implements ServletContextListener {
     private AtomicInteger id = new AtomicInteger(0);
 
     DefaultCacheManager cacheManager;
-    private Map<Address, ServiceType> paymentRequests; // paymentAddress -> serviceType
-    private Map<Sha256Hash, ServiceType> paidServices; // txid           -> serviceType
-    private Map<Address, Sha256Hash> paidToAddresses;  // paymentAddress -> txid
-    private Map<Integer, PopRequest> popRequests;      // requestId      -> PopRequest
-    private Map<Integer, ServiceType> verifiedPops;    // requestId      -> serviceType
+    private Cache<Address, ServiceType> paymentRequests; // paymentAddress -> serviceType
+    private Cache<Sha256Hash, ServiceType> paidServices; // txid           -> serviceType
+    private Cache<Address, Sha256Hash> paidToAddresses;  // paymentAddress -> txid
+    private Cache<Integer, PopRequest> popRequests;      // requestId      -> PopRequest
+    private Cache<Integer, ServiceType> verifiedPops;    // requestId      -> serviceType
 
-    private Map<Integer, Long> maxUniqueLong;          // 1 -> maxLongEverUsed
+    private Cache<Integer, Long> maxUniqueLong;          // 1 -> maxLongEverUsed
 
     /**
      * Step 1: request a payment and associate the paymentAddress with the serviceType
@@ -66,7 +68,7 @@ public class Storage implements ServletContextListener {
             paymentRequests.put(paymentAddress, serviceType); // Replace the object since we've modified it
             if (serviceType.isPaidFor()) {
                 paidToAddresses.put(paymentAddress, txid);
-                paidServices.put(txid, serviceType);
+                paidServices.put(txid, serviceType, serviceType.getServiceTime(), TimeUnit.MILLISECONDS);
                 paymentRequests.remove(paymentAddress);
             }
         }
