@@ -9,17 +9,17 @@ import java.io.Serializable;
 public class Message implements Serializable{
     String message;
 
-    public Message(String message) {
-        if (message == null) {
+    public Message(String messageText) {
+        if (messageText == null) {
             throw new NullPointerException();
         }
-        if (message.trim().isEmpty()) {
+        if (messageText.trim().isEmpty()) {
             throw new IllegalArgumentException("Message must not be null");
         }
-        this.message = message;
+        this.message = messageText;
     }
 
-    public String getHtmlSafeMessage() {
+    public String getMessageText() {
         return message;
     }
 }

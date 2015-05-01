@@ -31,10 +31,10 @@ A payment will give one year exclusivity on the message space. A message must no
             <input type="hidden" name="messageSpaceId" value="${mess.id}"/>
             <div class="messageSpaceId">${mess.id}:</div>
             <div onclick="displayControls('${mess.id}')">
-                ${mess.message.htmlSafeMessage}
+                <c:out value="${mess.message.messageText}"/>
             </div>
             <div style="visibility: hidden" id="div${mess.id}">
-                <input id="input${mess.id}" name="messageSpaceText" type="text" placeholder="${mess.message.htmlSafeMessage}"/>
+                <input id="input${mess.id}" name="messageSpaceText" type="text" placeholder="<c:out value="${mess.message.messageText}"/>"/>
                 <input type="submit" value="Update"/>
             </div>
         </p>
