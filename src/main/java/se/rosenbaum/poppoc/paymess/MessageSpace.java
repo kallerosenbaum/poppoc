@@ -1,6 +1,8 @@
 package se.rosenbaum.poppoc.paymess;
 
-public class MessageSpace {
+import java.io.Serializable;
+
+public class MessageSpace implements Serializable{
     Long id;
     Message message;
 

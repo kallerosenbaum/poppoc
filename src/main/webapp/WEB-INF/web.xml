@@ -10,10 +10,10 @@
         <listener-class>se.rosenbaum.poppoc.core.Storage</listener-class>
     </listener>
     <!-- define global error handler -->
-    <error-page>
+ <!--   <error-page>
         <location>/ErrorHandler/</location>
     </error-page>
-
+     -->
     <context-param>
         <param-name>log4jContextName</param-name>
         <param-value>poppocLogContextName</param-value>

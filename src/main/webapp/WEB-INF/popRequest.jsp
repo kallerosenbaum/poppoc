@@ -12,10 +12,8 @@
                     if (data === "VALID POP RECEIVED") {
                         $('#status').html("Pop received.");
                         <c:if test="${not empty serviceType.popCallback}">
-                            document.href = "${serviceType.popCallback}";
+                            window.location.href = "${serviceType.popCallback}";
                         </c:if>
-
-                        window.location.href = "${pageContext.request.contextPath}/Service?serviceId=${serviceType.serviceId}";
                     } else {
                         setTimeout(pollPayment, 500);
                     }

@@ -34,7 +34,7 @@ public class RequestPayment extends BasicServlet {
 
         ServiceType serviceType = new ServiceTypeFactory().createServiceType(serviceId);
         serviceType.useParameters(request.getParameterMap());
-
+        serviceType.setPaymentAddress(address);
         String paymentUri = serviceType.getPaymentUri(address);
         Storage storage = getStorage();
         storage.storePendingPayment(address, serviceType);

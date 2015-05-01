@@ -8,10 +8,16 @@
             </persistence>
         </local-cache>
         <local-cache name="paymentRequests"/>
+        <local-cache name="paidToAddresses" >
+            <expiration lifespan="300000"/>
+        </local-cache>
         <local-cache name="paidServices">
             <expiration lifespan="86400000"/>
         </local-cache>
         <local-cache name="pendingPopRequests"/>
         <local-cache name="verifiedPops"/>
+        <local-cache name="maxUniqueLong">
+            <expiration lifespan="-1"/>
+        </local-cache>
     </cache-container>
 </infinispan>

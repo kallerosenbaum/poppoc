@@ -51,9 +51,9 @@ public class PopServlet extends BasicServlet {
         Pop pop = new Pop(getConfig().getNetworkParameters(), out.toByteArray());
 
         try {
-            validatePop(getWallet(), pop, popRequest);
+            Sha256Hash txid = validatePop(getWallet(), pop, popRequest);
             replySuccess(response);
-            storage.storeVerifiedPop(requestId);
+            storage.storeVerifiedPop(requestId, txid);
         } catch (InvalidPopException e) {
             replyError(e.getMessage(), response, e);
         }
@@ -87,7 +87,7 @@ public class PopServlet extends BasicServlet {
         }
     }
 
-    void validatePop(Wallet wallet, Pop pop, PopRequest popRequest) throws InvalidPopException {
+    Sha256Hash validatePop(Wallet wallet, Pop pop, PopRequest popRequest) throws InvalidPopException {
         try {
             pop.verify();
         } catch (VerifyError e) {
@@ -121,6 +121,7 @@ public class PopServlet extends BasicServlet {
         checkProvedTransaction(wallet, pop, popRequest, txid);
         // No exceptions, means PoP valid.
         logger.info("Valid PoP for txid {} received.", txid);
+        return txid;
     }
 
     private void checkProvedTransaction(Wallet wallet, Pop pop, PopRequest popRequest, Sha256Hash txid) throws InvalidPopException {
@@ -176,19 +177,9 @@ public class PopServlet extends BasicServlet {
     private void checkPaysForCorrectService(PopRequest popRequest, Transaction blockchainTx) throws InvalidPopException {
         NetworkParameters networkParameters = getConfig().getNetworkParameters();
         boolean paysForCorrectService = false;
-        for (TransactionOutput transactionOutput : blockchainTx.getOutputs()) {
-            Address outputAddress = transactionOutput.getAddressFromP2PKHScript(networkParameters);
-            if (outputAddress == null) {
-                outputAddress = transactionOutput.getAddressFromP2SH(networkParameters);
-                if (outputAddress == null) {
-                    continue; // No address found here, try the next output
-                }
-            }
-            ServiceType serviceIdForPayment = getStorage().getServiceIdForPayment(outputAddress);
-            if (serviceIdForPayment != null && serviceIdForPayment.getServiceId() == popRequest.getServiceType().getServiceId()) {
-                paysForCorrectService = true;
-                break;
-            }
+        ServiceType serviceTypeForPayment = getStorage().getServiceTypeForPayment(blockchainTx.getHash());
+        if (serviceTypeForPayment != null && serviceTypeForPayment.isSameServiceType(popRequest.getServiceType())) {
+            paysForCorrectService = true;
         }
         if (!paysForCorrectService) {
             throw new InvalidPopException("Proven transaction does not pay for serviceId " + popRequest.getServiceType());

@@ -6,21 +6,25 @@ import se.rosenbaum.poppoc.core.PopRequest;
 
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
+import java.util.Date;
 import java.util.Random;
 
-/**
- * User: kalle
- * Date: 4/29/15 5:40 PM
- */
+
 public abstract class StandardService implements ServiceType {
     long paidSatoshis = 0;
+    Date paidDate = null;
+    private Address paymentAddress;
 
     public Sha256Hash getPayment() {
         return null;
     }
 
     public long addPayment(long satoshis) {
+        boolean alreadyPaidFor = isPaidFor();
         paidSatoshis += satoshis;
+        if (isPaidFor() && !alreadyPaidFor) {
+            paidDate = new Date();
+        }
         return paidSatoshis;
     }
 
@@ -39,5 +43,25 @@ public abstract class StandardService implements ServiceType {
         popRequest.setText(text);
         popRequest.setTxid(txid);
         return popRequest;
+    }
+
+    public Date paidDate() {
+        return paidDate;
+    }
+
+    public Address setPaymentAddress(Address address) {
+        return this.paymentAddress = address;
+    }
+
+    public Address getPaymentAddress() {
+        return this.paymentAddress;
+    }
+
+    public boolean isSameServiceType(ServiceType serviceType) {
+        return serviceType.getServiceId() == getServiceId();
+    }
+
+    public void update(ServiceType nakedServiceType) {
+
     }
 }

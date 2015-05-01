@@ -2,6 +2,7 @@ package se.rosenbaum.poppoc.servlet;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
+import org.bitcoinj.core.Sha256Hash;
 import se.rosenbaum.poppoc.core.ClientException;
 import se.rosenbaum.poppoc.service.ServiceType;
 
@@ -26,9 +27,9 @@ public class PaymentPoll extends BasicServlet {
             throw new ClientException("Address " + addressString + " not parsable", e);
         }
 
-        ServiceType serviceId = getStorage().getServiceIdForPayment(address);
+        Sha256Hash txid = getStorage().getPaymentTransaction(address);
         response.setContentType("text/plain; charset=US-ASCII");
-        if (serviceId != null) {
+        if (txid != null) {
             response.getWriter().write(JspConst.PAYMENT_RECEIVED.val());
         } else {
             response.getWriter().write(JspConst.PAYMENT_NOT_RECEIVED_YET.val());

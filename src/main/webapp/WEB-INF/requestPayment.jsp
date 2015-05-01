@@ -11,7 +11,7 @@
                     if (data === 'PAYMENT RECEIVED') {
                         $('#status').html('Payment received.');
                         <c:if test="${not empty serviceType.paymentCallback}">
-                            document.href = ${serviceType.paymentCallback};
+                            window.location.href = "${serviceType.paymentCallback}";
                         </c:if>
                         $('#useServiceLink').css("visibility", "visible");
                     } else {

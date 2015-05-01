@@ -13,12 +13,12 @@ import java.io.IOException;
  * User: kalle
  * Date: 4/28/15 9:16 PM
  */
-@WebServlet(urlPatterns = "/NewMessageSpace/*", name = "NewMessageSpace")
+@WebServlet(urlPatterns = "/UpdateMessageSpace/*", name = "UpdateMessageSpace")
 public class UpdateMessageSpace extends PopRequestServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        PayMessService serviceType = new PayMessService();
-        serviceType.useParameters(request.getParameterMap());
+        PayMessService nakedServiceType = new PayMessService();
+        nakedServiceType.useParameters(request.getParameterMap());
 
-        createPopRequest(request, response, serviceType);
+        createPopRequest(request, response, nakedServiceType);
     }
 }

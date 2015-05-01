@@ -1,6 +1,9 @@
 package se.rosenbaum.poppoc.core;
 
 import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionOutput;
 import org.infinispan.manager.DefaultCacheManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +13,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -37,9 +41,12 @@ public class Storage implements ServletContextListener {
 
     DefaultCacheManager cacheManager;
     private Map<Address, ServiceType> paymentRequests; // paymentAddress -> serviceType
-    private Map<Address, ServiceType> paidServices;    // paymentAddress -> serviceType
+    private Map<Sha256Hash, ServiceType> paidServices; // txid           -> serviceType
+    private Map<Address, Sha256Hash> paidToAddresses;  // paymentAddress -> txid
     private Map<Integer, PopRequest> popRequests;      // requestId      -> PopRequest
     private Map<Integer, ServiceType> verifiedPops;    // requestId      -> serviceType
+
+    private Map<Integer, Long> maxUniqueLong;          // 1 -> maxLongEverUsed
 
     /**
      * Step 1: request a payment and associate the paymentAddress with the serviceType
@@ -52,28 +59,38 @@ public class Storage implements ServletContextListener {
      * Step 2: Find the serviceType associated with the paymentAddress. If found,
      * move the record to paidServices. Return the serviceType paid for,
      */
-    public ServiceType storePayment(Address paymentAddress, long satoshis) {
+    public ServiceType storePayment(Address paymentAddress, Sha256Hash txid, long satoshis) {
         ServiceType serviceType = paymentRequests.get(paymentAddress);
         if (serviceType != null) {
             serviceType.addPayment(satoshis);
+            paymentRequests.put(paymentAddress, serviceType); // Replace the object since we've modified it
             if (serviceType.isPaidFor()) {
-                paidServices.put(paymentAddress, serviceType);
+                paidToAddresses.put(paymentAddress, txid);
+                paidServices.put(txid, serviceType);
                 paymentRequests.remove(paymentAddress);
             }
         }
         return serviceType;
     }
 
+
     /**
      * Step 3: Check that we have received a payment to a certain address. This is done
      * to notify the user that the payment is received.
      */
-    public ServiceType getServiceIdForPayment(Address address) {
-        return paidServices.get(address);
+    public Sha256Hash getPaymentTransaction(Address address) {
+        return paidToAddresses.get(address);
     }
 
     /**
-     * Step 4: A PopRequest is created, stored here, and sent to the user. The
+     * Step 4: Get the paid-for serviceType for a transaction.
+     */
+    public ServiceType getServiceTypeForPayment(Sha256Hash txid) {
+        return paidServices.get(txid);
+    }
+
+    /**
+     * Step 5: A PopRequest is created, stored here, and sent to the user. The
      * returned requestId is later used to check the Pop against the PopRequest.
      */
     public int store(PopRequest request) {
@@ -83,16 +100,16 @@ public class Storage implements ServletContextListener {
     }
 
     /**
-     * Step 5: Get the PopRequest in order to validate an incoming Pop.
+     * Step 6: Get the PopRequest in order to validate an incoming Pop.
      */
     public PopRequest getPopRequest(int requestId) {
         return popRequests.get(requestId);
     }
 
     /**
-     * Step 6: Store the information that the Pop has been received and verified
+     * Step 7: Store the information that the Pop has been received and verified
      */
-    public void storeVerifiedPop(int requestId) {
+    public void storeVerifiedPop(int requestId, Sha256Hash txid) {
         PopRequest popRequest = popRequests.remove(requestId);
         if (popRequest == null && verifiedPops.get(requestId) != null) {
             return; // already verified. Actually an error condition.
@@ -100,11 +117,15 @@ public class Storage implements ServletContextListener {
         if (popRequest == null && verifiedPops.get(requestId) == null) {
             return; // The pop request was invalidated (too old) while verifying the pop.
         }
-        verifiedPops.put(requestId, popRequest.getServiceType());
+        ServiceType serviceType = paidServices.get(txid);
+        ServiceType nakedServiceType = popRequest.getServiceType();
+        serviceType.update(nakedServiceType);
+        paidServices.put(txid, serviceType); // Update the cache with new data
+        verifiedPops.put(requestId, serviceType);
     }
 
     /**
-     * Step 7: Check if the PopRequest with the specified requestId has been successfully fulfilled.
+     * Step 8: Check if the PopRequest with the specified requestId has been successfully fulfilled.
      */
     public ServiceType removeVerifiedPop(int requestId) {
         ServiceType serviceType = verifiedPops.remove(requestId);
@@ -124,8 +145,10 @@ public class Storage implements ServletContextListener {
         }
         paymentRequests = cacheManager.getCache("paymentRequests");
         paidServices = cacheManager.getCache("paidServices");
+        paidToAddresses = cacheManager.getCache("paidToAddresses");
         popRequests = cacheManager.getCache("pendingPopRequests");
         verifiedPops = cacheManager.getCache("verifiedPops");
+        maxUniqueLong = cacheManager.getCache("maxUniqueLong");
 
         // Make sure we don't reuse requestIds that are still in use.
         // This is a very clumsy way of doing it that possibly never will
@@ -154,10 +177,23 @@ public class Storage implements ServletContextListener {
         }
     }
 
+    public long getUniqueLong() {
+        Long maxLong = maxUniqueLong.get(1);
+        if (maxLong == null) {
+            maxLong = 0L;
+        }
+        long result = maxLong + 1;
+        maxUniqueLong.put(1, result);
+        return result;
+    }
 
-    Random random = new Random(System.currentTimeMillis());
-
-    public Long getUniqueLong() {
-        return random.nextLong();
+    public List<ServiceType> getAllPaidServicesOfId(int serviceId) {
+        List<ServiceType> result = new ArrayList<ServiceType>();
+        for (ServiceType serviceType : paidServices.values()) {
+            if (serviceId == serviceType.getServiceId()) {
+                result.add(serviceType);
+            }
+        }
+        return result;
     }
 }

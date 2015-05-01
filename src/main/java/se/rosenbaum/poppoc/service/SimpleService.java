@@ -21,11 +21,7 @@ public class SimpleService extends StandardService {
     }
 
     public String getPaymentUri(Address address) {
-        try {
-            return "bitcoin:" + URLEncoder.encode(address.toString(), "UTF-8") + "?label=service" + getServiceId();
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        return "bitcoin:" + address.toString() + "?label=service" + getServiceId();
     }
 
     public boolean isPaidFor() {
@@ -47,4 +43,6 @@ public class SimpleService extends StandardService {
     public String getPopCallback() {
         return "Service?serviceId=" + getServiceId();
     }
+
+
 }

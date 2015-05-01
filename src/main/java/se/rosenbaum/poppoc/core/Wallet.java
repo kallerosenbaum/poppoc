@@ -31,9 +31,12 @@ public class Wallet implements ServletContextListener {
             public void onCoinsReceived(org.bitcoinj.core.Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 List<TransactionOutput> outputs = tx.getOutputs();
                 for (TransactionOutput output : outputs) {
+                    if (!output.isMine(wallet)) {
+                        continue;
+                    }
                     Address address = output.getAddressFromP2PKHScript(params);
                     logger.info("Payment received. Value: {} Txid: {}", tx.getValueSentToMe(wallet), tx.getHash());
-                    storage.storePayment(address, tx.getValueSentToMe(wallet).getValue());
+                    storage.storePayment(address, tx.getHash(), tx.getValueSentToMe(wallet).getValue());
                 }
                 sendFunds();
             }

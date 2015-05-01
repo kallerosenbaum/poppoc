@@ -18,8 +18,8 @@ import java.util.Random;
 
 public class PopRequestServlet extends BasicServlet {
 
-    protected void createPopRequest(HttpServletRequest request, HttpServletResponse response, ServiceType serviceType) throws ServletException, IOException {
-        PopRequest popRequest = serviceType.getPopRequest();
+    protected void createPopRequest(HttpServletRequest request, HttpServletResponse response, ServiceType nakedServiceType) throws ServletException, IOException {
+        PopRequest popRequest = nakedServiceType.getPopRequest();
 
         Storage storage = getStorage();
         int requestId = storage.store(popRequest);
@@ -31,7 +31,7 @@ public class PopRequestServlet extends BasicServlet {
         request.setAttribute(JspConst.POP_REQUEST.val(), popRequestUri);
         request.setAttribute(JspConst.POP_REQUEST_URL_ENCODED.val(), urlEncode(popRequestUri));
         request.setAttribute(JspConst.POP_POLL_URL.val(), popPollUrl);
-        request.setAttribute(JspConst.SERVICE_TYPE.val(), serviceType);
+        request.setAttribute(JspConst.SERVICE_TYPE.val(), nakedServiceType);
         HttpSession session = request.getSession(true);
         session.setAttribute(SESSION_POP_REQUEST_ID, requestId);
         RequestDispatcher requestDispatcher = request.getRequestDispatcher("/WEB-INF/popRequest.jsp");

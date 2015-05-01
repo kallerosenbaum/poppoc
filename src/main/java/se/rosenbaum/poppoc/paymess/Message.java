@@ -1,10 +1,12 @@
 package se.rosenbaum.poppoc.paymess;
 
+import java.io.Serializable;
+
 /**
  * User: kalle
  * Date: 4/28/15 7:49 PM
  */
-public class Message {
+public class Message implements Serializable{
     String message;
 
     public Message(String message) {

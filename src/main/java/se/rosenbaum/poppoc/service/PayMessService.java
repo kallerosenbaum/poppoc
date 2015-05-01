@@ -23,16 +23,7 @@ public class PayMessService extends StandardService {
     }
 
     public String getPaymentUri(Address address) {
-        try {
-            return "bitcoin:" + URLEncoder.encode(address.toString(), "UTF-8") + "?label=PayMess" + messageSpace.getId();
-            //"bitcoin:" + urlEncode(address.toString());
-
-            //paymentUri = appendParam(request, "amount", paymentUri);
-            //paymentUri = appendParam(request, "label", paymentUri);
-            //paymentUri = appendParam(request, "message", paymentUri);
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        return "bitcoin:" + address.toString() + "?label=PayMess " + messageSpace.getId() + "&amount=" + PRICE_SATOSHIS*Math.pow(10, -8);
     }
 
     public boolean isPaidFor() {
@@ -44,14 +35,14 @@ public class PayMessService extends StandardService {
     }
 
     public void useParameters(Map<String, String[]> parameters) {
-        String messageSpaceIdString = getParameter("messageSpaceid", parameters);
+        String messageSpaceIdString = getParameter("messageSpaceId", parameters);
         Long messageSpaceId;
         try {
             messageSpaceId = Long.parseLong(messageSpaceIdString);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Cannot parse long from " + messageSpaceIdString);
         }
-        String messageSpaceText = getParameter("messageSpacetext", parameters);
+        String messageSpaceText = getParameter("messageSpaceText", parameters);
         if (messageSpaceText == null || messageSpaceText.isEmpty()) {
             throw new IllegalArgumentException("messageSpaceText must not be null or empty");
         }
@@ -73,5 +64,25 @@ public class PayMessService extends StandardService {
 
     public String getPopCallback() {
         return "PayMess";
+    }
+
+    public MessageSpace getMessageSpace() {
+        return messageSpace;
+    }
+
+    public boolean isSameServiceType(ServiceType serviceType) {
+        if (serviceType.getServiceId() != getServiceId()) {
+            return false;
+        }
+        PayMessService other = (PayMessService)serviceType;
+        return messageSpace.getId() == other.messageSpace.getId();
+    }
+
+
+    public void update(ServiceType nakedServiceType) {
+        if (!(nakedServiceType instanceof PayMessService)) {
+            throw new IllegalArgumentException("Invalid type of ServiceType:" + nakedServiceType.getClass().toString());
+        }
+        messageSpace = ((PayMessService)nakedServiceType).messageSpace;
     }
 }

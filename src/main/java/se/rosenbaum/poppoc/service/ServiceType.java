@@ -5,15 +5,19 @@ import org.bitcoinj.core.Sha256Hash;
 import se.rosenbaum.poppoc.core.PopRequest;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.Map;
 
 public interface ServiceType extends Serializable {
     int getServiceId();
     PopRequest getPopRequest();
+    Address setPaymentAddress(Address address);
+    Address getPaymentAddress();
     String getPaymentUri(Address address);
     Sha256Hash getPayment();
     long addPayment(long satoshis);
     boolean isPaidFor();
+    Date paidDate();
     String getPriceTag();
 
     /**
@@ -25,4 +29,8 @@ public interface ServiceType extends Serializable {
 
     public String getPaymentCallback();
     public String getPopCallback();
+
+    public boolean isSameServiceType(ServiceType serviceType);
+
+    public void update(ServiceType nakedServiceType);
 }
