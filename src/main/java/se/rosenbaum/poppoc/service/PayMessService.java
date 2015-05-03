@@ -90,6 +90,6 @@ public class PayMessService extends StandardService {
     }
 
     public long getServiceTime() {
-        return 365*24*60*60*1000; // 24h
+        return 365L*24L*60L*60L*1000L; // 1 year
     }
 }

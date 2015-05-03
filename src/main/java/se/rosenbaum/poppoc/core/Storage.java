@@ -5,7 +5,10 @@ import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutput;
 import org.infinispan.Cache;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.metadata.Metadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.rosenbaum.poppoc.service.ServiceType;
@@ -68,7 +71,8 @@ public class Storage implements ServletContextListener {
             paymentRequests.put(paymentAddress, serviceType); // Replace the object since we've modified it
             if (serviceType.isPaidFor()) {
                 paidToAddresses.put(paymentAddress, txid);
-                paidServices.put(txid, serviceType, serviceType.getServiceTime(), TimeUnit.MILLISECONDS);
+                long serviceTime = serviceType.getServiceTime();
+                paidServices.put(txid, serviceType, serviceTime, TimeUnit.MILLISECONDS);
                 paymentRequests.remove(paymentAddress);
             }
         }
@@ -119,10 +123,14 @@ public class Storage implements ServletContextListener {
         if (popRequest == null && verifiedPops.get(requestId) == null) {
             return; // The pop request was invalidated (too old) while verifying the pop.
         }
-        ServiceType serviceType = paidServices.get(txid);
+        CacheEntry<Sha256Hash, ServiceType> cacheEntry = paidServices.getAdvancedCache().getCacheEntry(txid);
+        long lifespan = cacheEntry.getLifespan();
+        long created = ((MortalCacheEntry)cacheEntry).getCreated();
+        long newLifespan = lifespan - (System.currentTimeMillis() - created);
+        ServiceType serviceType = cacheEntry.getValue();
         ServiceType nakedServiceType = popRequest.getServiceType();
         serviceType.update(nakedServiceType);
-        paidServices.put(txid, serviceType); // Update the cache with new data
+        paidServices.getAdvancedCache().replace(txid, serviceType, newLifespan, TimeUnit.MILLISECONDS); // Update the cache with new data, preserving metadata, ie lifespan
         verifiedPops.put(requestId, serviceType);
     }
 

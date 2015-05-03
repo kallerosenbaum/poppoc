@@ -12,7 +12,7 @@
             <expiration lifespan="300000"/>
         </local-cache>
         <local-cache name="paidServices">
-            <expiration lifespan="86400000"/>
+            <expiration lifespan="-1"/> <!-- This is set on a per-entry basis -->
         </local-cache>
         <local-cache name="pendingPopRequests"/>
         <local-cache name="verifiedPops"/>
