@@ -182,7 +182,7 @@ public class PopServlet extends BasicServlet {
             paysForCorrectService = true;
         }
         if (!paysForCorrectService) {
-            throw new InvalidPopException("Proven transaction does not pay for serviceId " + popRequest.getServiceType());
+            throw new InvalidPopException("Proven transaction does not pay for service " + popRequest.getServiceType().getClass().getSimpleName());
         }
     }
 
