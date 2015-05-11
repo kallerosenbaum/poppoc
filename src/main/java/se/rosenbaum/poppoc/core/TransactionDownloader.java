@@ -38,6 +38,9 @@ public class TransactionDownloader {
             BinaryTransactionResponse binaryTransactionResponse = gson.fromJson(response.body().charStream(), BinaryTransactionResponse.class);
             byte[] transactionBytes = DatatypeConverter.parseHexBinary(binaryTransactionResponse.hex);
             Transaction t = new Transaction(networkParameters, transactionBytes);
+            if (!hash.equals(t.getHash())) {
+                throw new RuntimeException("Got an unexpected transaction from online API. Expected " + hash + " but got " + t.getHash());
+            }
             return t;
         } catch (Exception e) {
             logger.error("Error downloading tx " + hash, e);
