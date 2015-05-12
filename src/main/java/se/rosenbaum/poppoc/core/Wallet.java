@@ -80,7 +80,6 @@ public class Wallet implements ServletContextListener {
     }
 
     public Transaction getTransaction(Sha256Hash txid) {
-        walletAppKit.wallet().getTransactions(true);
         return walletAppKit.wallet().getTransaction(txid);
     }
 
