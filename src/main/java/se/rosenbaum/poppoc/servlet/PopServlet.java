@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,6 +26,7 @@ import java.util.regex.Pattern;
 @WebServlet(urlPatterns = "/Pop/*", name = "Pop")
 @MultipartConfig
 public class PopServlet extends BasicServlet {
+    public static final String CONTENT_TYPE = "application/bitcoin-pop";
     Logger logger = LoggerFactory.getLogger(PopServlet.class);
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -32,6 +34,10 @@ public class PopServlet extends BasicServlet {
         if (requestId < 0) {
             replyError("Invalid requestId " + requestId, response, null);
             return;
+        }
+
+        if ("application/bitcoin-pop".equals(request.getContentType())) {
+            replyError("Unexpected content type. Expected " + CONTENT_TYPE, response, null);
         }
 
         Storage storage = getStorage();
@@ -87,27 +93,39 @@ public class PopServlet extends BasicServlet {
         }
     }
 
+
+    /**
+     * This will check the PoP according to specification at
+     * {@link https://github.com/kallerosenbaum/poppoc/wiki/Proof-of-Payment}
+     */
     Sha256Hash validatePop(Wallet wallet, Pop pop, PopRequest popRequest) throws InvalidPopException {
+        // 1 Basic checks
         try {
             pop.verify();
         } catch (VerifyError e) {
             throw new InvalidPopException("Basic verification failed.", e);
         }
 
+        // 2 Check OP_RETURN output
         byte[] data = checkOutput(pop);
 
-        byte[] txidBytes = new byte[32];
-        System.arraycopy(data, 4, txidBytes, 0, 32);
-        Sha256Hash txid = new Sha256Hash(txidBytes);
+        Sha256Hash txid = new Sha256Hash(ByteBuffer.wrap(data, 3, 32).array());
+        Transaction provenTransaction = getBlockchainTransaction(wallet, txid);
 
-        byte[] nonceBytes = new byte[8];
-        System.arraycopy(data, 36, nonceBytes, 3, 5);
-        long nonce = ByteBuffer.wrap(nonceBytes).getLong();
+        // 3 Check other outputs
+        checkOutputs(pop, provenTransaction);
 
-        if (nonce != popRequest.getNonce()) {
-            throw new InvalidPopException("Wrong nonce");
-        }
+        // 4 Check nonce
+        checkNonce(popRequest, data);
 
+        // 5 Check inputs
+        // 6 Check signatures
+        checkInputsAndSignatures(wallet, pop, popRequest, provenTransaction);
+
+        // 7 Check proven transaction
+        checkPaysForCorrectService(popRequest, provenTransaction);
+
+        // If specific txid is requested, Check that the pop proves that tx.
         if (popRequest.getTxid() != null) {
             if (!txid.toString().equals(popRequest.getTxid())) {
                 throw new InvalidPopException("Wrong transaction");
@@ -118,30 +136,72 @@ public class PopServlet extends BasicServlet {
         // actually equals the amount in txid.
         // Not imlemented here right now.
 
-        checkProvedTransaction(wallet, pop, popRequest, txid);
         // No exceptions, means PoP valid.
         logger.info("Valid PoP for txid {} received.", txid);
         return txid;
     }
 
-    private void checkProvedTransaction(Wallet wallet, Pop pop, PopRequest popRequest, Sha256Hash txid) throws InvalidPopException {
+    private Transaction getBlockchainTransaction(Wallet wallet, Sha256Hash txid) throws InvalidPopException {
         Transaction blockchainTx = wallet.getTransaction(txid);
         if (blockchainTx == null) {
             throw new InvalidPopException("Unknown transaction");
         }
+        return blockchainTx;
+    }
 
-        checkPaysForCorrectService(popRequest, blockchainTx);
+    private void checkOutputs(Pop pop, Transaction provenTransaction) throws InvalidPopException {
+        List<TransactionOutput> popOutputs = pop.getOutputs();
+        List<TransactionOutput> provenTxOutputs = provenTransaction.getOutputs();
+        Coin expectedPopOutputValue = Coin.ZERO;
+        int popOutputIndex = 1;
+        for (int provenTxIndex = 0; provenTxIndex < provenTxOutputs.size(); provenTxIndex++) {
+            TransactionOutput provenTxOutput = provenTxOutputs.get(provenTxIndex);
+            byte[] scriptBytes = provenTxOutput.getScriptBytes();
+            if (scriptBytes != null && scriptBytes.length > 0 && scriptBytes[0] == ScriptOpCodes.OP_RETURN) {
+                expectedPopOutputValue.add(provenTxOutput.getValue());
+                continue; // OP_RETURN outputs from proven tx should not appear in the PoP.
+            }
+            if (popOutputIndex < popOutputs.size()) {
+                TransactionOutput popOutput = popOutputs.get(popOutputIndex);
+                popOutputIndex++;
+                if (!popOutput.getValue().equals(provenTxOutput.getValue())) {
+                    throw new InvalidPopException("Mismatching value of output " + (popOutputIndex - 1) +
+                            ". Expected " + provenTxOutput.getValue() + ", got " + popOutput.getValue());
+                }
+                if (!Arrays.equals(popOutput.getScriptBytes(), provenTxOutput.getScriptBytes())) {
+                    throw new InvalidPopException("Mismatching script of output " + (popOutputIndex - 1));
+                }
+            }
+        }
+        Coin popOutputValue = pop.getOutput(0).getValue();
+        if (!popOutputValue.equals(expectedPopOutputValue)) {
+            throw new InvalidPopException("Unexpected value of PoP output. Expected " + expectedPopOutputValue +
+                    ". Got " + popOutputValue);
+        }
+    }
+
+    private void checkNonce(PopRequest popRequest, byte[] data) throws InvalidPopException {
+        byte[] nonceBytes = new byte[8];
+        System.arraycopy(data, 36, nonceBytes, 3, 5);
+        long nonce = ByteBuffer.wrap(nonceBytes).getLong();
+
+        if (nonce != popRequest.getNonce()) {
+            throw new InvalidPopException("Wrong nonce");
+        }
+    }
+
+    private void checkInputsAndSignatures(Wallet wallet, Pop pop, PopRequest popRequest, Transaction provenTransaction) throws InvalidPopException {
+
 
         List<TransactionInput> popInputs = pop.getInputs();
-        List<TransactionInput> blockchainTxInputs = blockchainTx.getInputs();
+        List<TransactionInput> blockchainTxInputs = provenTransaction.getInputs();
         if (popInputs.size() != blockchainTxInputs.size()) {
             throw new InvalidPopException("Wrong number of inputs");
         }
 
         for (int i = 0; i < blockchainTxInputs.size(); i++) {
-            // Here I assume the inputs of the pop are in the same order
-            // as in the payment transaction. Maybe we should allow
-            // any order? I do think that strict checks are less error prone, though.
+            // Here I check that the inputs of the pop are in the same order
+            // as in the payment transaction.
             TransactionInput popInput = popInputs.get(i);
             TransactionInput bcInput = blockchainTxInputs.get(i);
             if (!popInput.getOutpoint().equals(bcInput.getOutpoint())) {
@@ -175,7 +235,6 @@ public class PopServlet extends BasicServlet {
     }
 
     private void checkPaysForCorrectService(PopRequest popRequest, Transaction blockchainTx) throws InvalidPopException {
-        NetworkParameters networkParameters = getConfig().getNetworkParameters();
         boolean paysForCorrectService = false;
         ServiceType serviceTypeForPayment = getStorage().getServiceTypeForPayment(blockchainTx.getHash());
         if (serviceTypeForPayment != null && serviceTypeForPayment.isSameServiceType(popRequest.getServiceType())) {
@@ -188,8 +247,8 @@ public class PopServlet extends BasicServlet {
 
     private byte[] checkOutput(Pop pop) throws InvalidPopException {
         List<TransactionOutput> outputs = pop.getOutputs();
-        if (outputs == null || outputs.size() != 1) {
-            throw new InvalidPopException("Wrong number of outputs");
+        if (outputs == null || outputs.size() < 2) {
+            throw new InvalidPopException("Wrong number of outputs. Expected at least 2.");
         }
         TransactionOutput output = outputs.get(0);
 
@@ -201,14 +260,9 @@ public class PopServlet extends BasicServlet {
             throw new InvalidPopException("Wrong opcode: " + scriptBytes[0]);
         }
 
-        String popLiteral;
-        try {
-            popLiteral = new String(scriptBytes, 1, 3, "US-ASCII");
-        } catch (UnsupportedEncodingException e) {
-            throw new InvalidPopException("Could not decode \"PoP\" literal");
-        }
-        if (!"PoP".equals(popLiteral)) {
-            throw new InvalidPopException("Invalid \"PoP\" literal. Got " + popLiteral);
+        short version = ByteBuffer.wrap(scriptBytes, 1, 2).getShort();
+        if (version != 1) {
+            throw new InvalidPopException("Wrong version: " + version + " expected 1");
         }
 
         return scriptBytes;
