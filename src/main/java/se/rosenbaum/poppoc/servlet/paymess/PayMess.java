@@ -1,9 +1,10 @@
-package se.rosenbaum.poppoc.servlet;
+package se.rosenbaum.poppoc.servlet.paymess;
 
 import se.rosenbaum.poppoc.paymess.Message;
 import se.rosenbaum.poppoc.paymess.MessageSpace;
 import se.rosenbaum.poppoc.service.PayMessService;
 import se.rosenbaum.poppoc.service.ServiceType;
+import se.rosenbaum.poppoc.servlet.BasicServlet;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;

@@ -7,10 +7,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Map;
 
-/**
- * User: kalle
- * Date: 4/29/15 5:43 PM
- */
 public class SimpleService extends StandardService {
     public int getServiceId() {
         return 1;

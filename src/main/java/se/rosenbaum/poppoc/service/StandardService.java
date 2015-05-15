@@ -28,19 +28,18 @@ public abstract class StandardService implements ServiceType {
         return paidSatoshis;
     }
 
-    protected PopRequest createPopRequest(String txid, Long amount, String text) {
+    protected PopRequest createPopRequest(String txid, Long amount, String label) {
         Random random = new SecureRandom();
 
-        byte[] nonceBytes = new byte[8];
+        byte[] nonceBytes = new byte[6];
         random.nextBytes(nonceBytes);
-        nonceBytes[0] = 0;
-        nonceBytes[1] = 0;
-        nonceBytes[2] = 0;
-        long nonce = ByteBuffer.wrap(nonceBytes).getLong();
+        byte[] longBytes  = new byte[8];
+        System.arraycopy(nonceBytes, 0, longBytes, 2, 6);
+        long nonce = ByteBuffer.wrap(longBytes).getLong();
 
         PopRequest popRequest = new PopRequest(nonce, this);
         popRequest.setAmount(amount);
-        popRequest.setText(text);
+        popRequest.setLabel(label);
         popRequest.setTxid(txid);
         return popRequest;
     }

@@ -1,9 +1,10 @@
-package se.rosenbaum.poppoc.servlet;
+package se.rosenbaum.poppoc.servlet.paysite;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.rosenbaum.poppoc.service.ServiceType;
 import se.rosenbaum.poppoc.service.ServiceTypeFactory;
+import se.rosenbaum.poppoc.servlet.PopRequestServlet;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;

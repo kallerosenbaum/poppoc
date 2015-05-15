@@ -1,4 +1,6 @@
-package se.rosenbaum.poppoc.servlet;
+package se.rosenbaum.poppoc.servlet.paysite;
+
+import se.rosenbaum.poppoc.servlet.BasicServlet;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;

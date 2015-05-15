@@ -1,5 +1,6 @@
 package se.rosenbaum.poppoc.servlet;
 
+import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.Coin;
 import se.rosenbaum.poppoc.core.PopRequest;
 import se.rosenbaum.poppoc.core.Storage;
@@ -12,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.Random;
@@ -45,41 +47,6 @@ public class PopRequestServlet extends BasicServlet {
 
     protected String createPopRequestUri(PopRequest popRequest, String contextPath, int requestId) throws UnsupportedEncodingException {
         String popUrl = getConfig().getPopDesitnation() + contextPath + "/Pop/" + requestId;
-        String popRequestUri = "btcpop:?p=" + urlEncode(popUrl);
-
-        popRequestUri += "&nonce=" + popRequest.getNonce();
-
-        if (isSet(popRequest.getTxid())) {
-            popRequestUri += "&txid=" + urlEncode(popRequest.getTxid());
-        }
-
-        if (popRequest.getAmount() != null) {
-            Coin amount = Coin.valueOf(popRequest.getAmount());
-            popRequestUri += "&amount=" + amount.toPlainString();
-        }
-
-        if (isSet(popRequest.getText())) {
-            popRequestUri += "&text=" + urlEncode(popRequest.getText());
-        }
-        return popRequestUri;
+        return popRequest.createPopRequestUri(popUrl);
     }
-
-    protected PopRequest createPopRequest(String txid, Long amount, String text, ServiceType serviceType) {
-        Random random = new SecureRandom();
-
-        byte[] nonceBytes = new byte[8];
-        random.nextBytes(nonceBytes);
-        nonceBytes[0] = 0;
-        nonceBytes[1] = 0;
-        nonceBytes[2] = 0;
-        long nonce = ByteBuffer.wrap(nonceBytes).getLong();
-
-        PopRequest popRequest = new PopRequest(nonce, serviceType);
-        popRequest.setAmount(amount);
-        popRequest.setText(text);
-        popRequest.setTxid(txid);
-        return popRequest;
-    }
-
-
 }

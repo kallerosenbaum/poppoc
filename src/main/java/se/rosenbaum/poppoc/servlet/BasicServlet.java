@@ -102,7 +102,7 @@ public class BasicServlet extends HttpServlet {
         return (Config) getServletContext().getAttribute("config");
     }
 
-    Storage getStorage() {
+    protected Storage getStorage() {
         return (Storage) getServletContext().getAttribute("storage");
     }
 
