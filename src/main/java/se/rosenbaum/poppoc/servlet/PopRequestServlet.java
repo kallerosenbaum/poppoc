@@ -1,7 +1,5 @@
 package se.rosenbaum.poppoc.servlet;
 
-import org.bitcoinj.core.Base58;
-import org.bitcoinj.core.Coin;
 import se.rosenbaum.poppoc.core.PopRequest;
 import se.rosenbaum.poppoc.core.Storage;
 import se.rosenbaum.poppoc.service.ServiceType;
@@ -13,10 +11,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.ByteBuffer;
-import java.security.SecureRandom;
-import java.util.Random;
 
 public class PopRequestServlet extends BasicServlet {
 

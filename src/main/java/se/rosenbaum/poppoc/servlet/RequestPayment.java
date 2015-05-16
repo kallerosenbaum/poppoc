@@ -3,11 +3,11 @@ package se.rosenbaum.poppoc.servlet;
 import org.bitcoinj.core.Address;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.rosenbaum.poppoc.core.ClientException;
 import se.rosenbaum.poppoc.core.Storage;
 import se.rosenbaum.poppoc.core.Wallet;
 import se.rosenbaum.poppoc.service.ServiceType;
 import se.rosenbaum.poppoc.service.ServiceTypeFactory;
+import se.rosenbaum.poppoc.core.ClientException;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;

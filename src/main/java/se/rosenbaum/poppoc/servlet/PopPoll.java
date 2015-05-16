@@ -2,9 +2,9 @@ package se.rosenbaum.poppoc.servlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.rosenbaum.poppoc.core.ClientException;
 import se.rosenbaum.poppoc.core.Storage;
 import se.rosenbaum.poppoc.service.ServiceType;
+import se.rosenbaum.poppoc.core.ClientException;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;

@@ -2,13 +2,10 @@ package se.rosenbaum.poppoc.core;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionOutput;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.metadata.Metadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.rosenbaum.poppoc.service.ServiceType;
@@ -19,8 +16,6 @@ import javax.servlet.ServletContextListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 

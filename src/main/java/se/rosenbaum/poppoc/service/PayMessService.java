@@ -6,8 +6,6 @@ import se.rosenbaum.poppoc.core.PopRequest;
 import se.rosenbaum.poppoc.paymess.Message;
 import se.rosenbaum.poppoc.paymess.MessageSpace;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.Map;
 
 public class PayMessService extends StandardService {

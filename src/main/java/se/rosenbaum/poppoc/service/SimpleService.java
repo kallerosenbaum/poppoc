@@ -3,8 +3,6 @@ package se.rosenbaum.poppoc.service;
 import org.bitcoinj.core.Address;
 import se.rosenbaum.poppoc.core.PopRequest;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.Map;
 
 public class SimpleService extends StandardService {

@@ -4,7 +4,6 @@ import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.Sha256Hash;
 import se.rosenbaum.poppoc.core.ClientException;
-import se.rosenbaum.poppoc.service.ServiceType;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;

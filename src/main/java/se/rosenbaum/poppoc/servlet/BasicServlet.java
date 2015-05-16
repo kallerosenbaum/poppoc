@@ -1,9 +1,9 @@
 package se.rosenbaum.poppoc.servlet;
 
-import se.rosenbaum.poppoc.core.ClientException;
-import se.rosenbaum.poppoc.core.Config;
 import se.rosenbaum.poppoc.core.Storage;
 import se.rosenbaum.poppoc.core.Wallet;
+import se.rosenbaum.poppoc.core.ClientException;
+import se.rosenbaum.poppoc.core.Config;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;

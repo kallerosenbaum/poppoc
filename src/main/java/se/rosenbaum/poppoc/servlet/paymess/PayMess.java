@@ -1,6 +1,5 @@
 package se.rosenbaum.poppoc.servlet.paymess;
 
-import se.rosenbaum.poppoc.paymess.Message;
 import se.rosenbaum.poppoc.paymess.MessageSpace;
 import se.rosenbaum.poppoc.service.PayMessService;
 import se.rosenbaum.poppoc.service.ServiceType;
@@ -11,7 +10,6 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;

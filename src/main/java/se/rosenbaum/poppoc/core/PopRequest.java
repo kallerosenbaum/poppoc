@@ -6,7 +6,6 @@ import se.rosenbaum.poppoc.service.ServiceType;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 
 public class PopRequest implements Serializable {
@@ -74,7 +73,7 @@ public class PopRequest implements Serializable {
     }
 
     public String createPopRequestUri(String popUrl) throws UnsupportedEncodingException {
-        String popRequestUri = "btcpop:?p=" + popURIEncode(popUrl);
+        String popRequestUri = "btcpop:?p=" + PopEncodeDecode.popURIEncode(popUrl);
 
         byte[] nonceBytes = new byte[6];
         System.arraycopy(ByteBuffer.allocate(8).putLong(getNonce()).array(), 2, nonceBytes, 0, 6);
@@ -90,39 +89,9 @@ public class PopRequest implements Serializable {
         }
 
         if (isSet(getLabel())) {
-            popRequestUri += "&label=" + popURIEncode(getLabel());
+            popRequestUri += "&label=" + PopEncodeDecode.popURIEncode(getLabel());
         }
         return popRequestUri;
-    }
-
-    String popURIEncode(String value) {
-        try {
-            if (value == null) {
-                return null;
-            }
-            StringBuffer buffer = new StringBuffer();
-            Character highSurrogate = null;
-            for (char c : value.toCharArray()) {
-                if (Character.isHighSurrogate(c)) {
-                    highSurrogate = c;
-                } else if (Character.isLowSurrogate(c)) {
-                    if (highSurrogate == null) {
-                        throw new RuntimeException("Found low surroggate without preceeding high surrogate!");
-                    } else {
-                        buffer.append(URLEncoder.encode(new String(new char[]{highSurrogate, c}), "UTF-8"));
-                        highSurrogate = null;
-                    }
-                } else if (c > '~' || c < ' ' || c == '&' || c == '%' || c == '=' || c == '#') {
-                    buffer.append(URLEncoder.encode(c + "", "UTF-8"));
-                } else {
-                    buffer.append(c);
-                }
-            }
-            return buffer.toString();
-        } catch (UnsupportedEncodingException e) {
-            // will not happen. Famous last words.
-            return null;
-        }
     }
 
     protected boolean isSet(String value) {

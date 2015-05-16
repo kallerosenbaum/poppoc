@@ -5,7 +5,6 @@ import org.bitcoinj.script.ScriptOpCodes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.rosenbaum.poppoc.core.*;
-import se.rosenbaum.poppoc.core.Wallet;
 import se.rosenbaum.poppoc.service.ServiceType;
 
 import javax.servlet.ServletException;
@@ -16,7 +15,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
@@ -98,7 +96,7 @@ public class PopServlet extends BasicServlet {
      * This will check the PoP according to specification at
      * {@link https://github.com/kallerosenbaum/poppoc/wiki/Proof-of-Payment}
      */
-    Sha256Hash validatePop(Wallet wallet, Pop pop, PopRequest popRequest) throws InvalidPopException {
+    Sha256Hash validatePop(se.rosenbaum.poppoc.core.Wallet wallet, Pop pop, PopRequest popRequest) throws InvalidPopException {
         // 1 Basic checks
         try {
             pop.verify();
@@ -141,7 +139,7 @@ public class PopServlet extends BasicServlet {
         return txid;
     }
 
-    private Transaction getBlockchainTransaction(Wallet wallet, Sha256Hash txid) throws InvalidPopException {
+    private Transaction getBlockchainTransaction(se.rosenbaum.poppoc.core.Wallet wallet, Sha256Hash txid) throws InvalidPopException {
         Transaction blockchainTx = wallet.getTransaction(txid);
         if (blockchainTx == null) {
             throw new InvalidPopException("Unknown transaction");
@@ -190,7 +188,7 @@ public class PopServlet extends BasicServlet {
         }
     }
 
-    private void checkInputsAndSignatures(Wallet wallet, Pop pop, PopRequest popRequest, Transaction provenTransaction) throws InvalidPopException {
+    private void checkInputsAndSignatures(se.rosenbaum.poppoc.core.Wallet wallet, Pop pop, PopRequest popRequest, Transaction provenTransaction) throws InvalidPopException {
 
 
         List<TransactionInput> popInputs = pop.getInputs();
