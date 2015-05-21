@@ -10,11 +10,12 @@ import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.rosenbaum.poppoc.core.validate.TransactionStore;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 
-public class TransactionDownloader {
+public class TransactionDownloader implements TransactionStore {
     private Logger logger = LoggerFactory.getLogger(TransactionDownloader.class);
 
     private String keyId;
@@ -22,33 +23,47 @@ public class TransactionDownloader {
     private NetworkParameters networkParameters;
     private OkHttpClient httpClient = new OkHttpClient();
     private String chainUrl;
+    private Wallet wallet;
 
-    public TransactionDownloader(String keyId, String keySecret, String chainUrl, NetworkParameters networkParameters) {
+    public TransactionDownloader(Wallet wallet, String keyId, String keySecret, String chainUrl, NetworkParameters networkParameters) {
         this.keyId = keyId;
         this.keySecret = keySecret;
         this.networkParameters = networkParameters;
         this.chainUrl = chainUrl;
+        this.wallet = wallet;
     }
 
-    public Transaction downloadTransaction(Sha256Hash hash) {
-        String url = getUrl("/transactions/" + hash.toString() + "/hex");
+    public Transaction getTransaction(Sha256Hash txid) {
+        Transaction localTransaction = getLocalTransaction(txid);
+        if (localTransaction != null) {
+            return localTransaction;
+        }
+        return getBlockchainTransaction(txid);
+    }
+
+    public Transaction getLocalTransaction(Sha256Hash txid) {
+        return wallet.getTransaction(txid);
+    }
+
+    public Transaction getBlockchainTransaction(Sha256Hash txid) {
+        String url = getUrl("/transactions/" + txid.toString() + "/hex");
         try {
             Response response = get(url);
             Gson gson = new Gson();
             BinaryTransactionResponse binaryTransactionResponse = gson.fromJson(response.body().charStream(), BinaryTransactionResponse.class);
             byte[] transactionBytes = DatatypeConverter.parseHexBinary(binaryTransactionResponse.hex);
             Transaction t = new Transaction(networkParameters, transactionBytes);
-            if (!hash.equals(t.getHash())) {
-                throw new RuntimeException("Got an unexpected transaction from online API. Expected " + hash + " but got " + t.getHash());
+            if (!txid.equals(t.getHash())) {
+                throw new RuntimeException("Got an unexpected transaction from online API. Expected " + txid + " but got " + t.getHash());
             }
             return t;
         } catch (Exception e) {
-            logger.error("Error downloading tx " + hash, e);
+            logger.error("Error downloading tx " + txid, e);
             throw new RuntimeException(e);
         }
     }
 
-    public String getUrl(String pathWithoutNetwork) {
+    private String getUrl(String pathWithoutNetwork) {
         //org.bitcoin.production or org.bitcoin.test
         String network;
         if (networkParameters.getId().equals("org.bitcoin.production")) {

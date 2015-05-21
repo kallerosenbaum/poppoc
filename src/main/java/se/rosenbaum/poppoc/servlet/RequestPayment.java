@@ -4,7 +4,7 @@ import org.bitcoinj.core.Address;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.rosenbaum.poppoc.core.Storage;
-import se.rosenbaum.poppoc.core.Wallet;
+import se.rosenbaum.poppoc.core.StorageBitcoinjWallet;
 import se.rosenbaum.poppoc.service.ServiceType;
 import se.rosenbaum.poppoc.service.ServiceTypeFactory;
 import se.rosenbaum.poppoc.core.ClientException;
@@ -28,7 +28,7 @@ public class RequestPayment extends BasicServlet {
         }
         int serviceId = Integer.parseInt(serviceIdString);
 
-        Wallet wallet = getWallet();
+        StorageBitcoinjWallet wallet = getWallet();
         Address address = wallet.getNewReceiveAddress();
         logger.debug("Generating address {}", address.toString());
 

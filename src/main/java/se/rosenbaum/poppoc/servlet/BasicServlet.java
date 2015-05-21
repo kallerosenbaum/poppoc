@@ -1,7 +1,7 @@
 package se.rosenbaum.poppoc.servlet;
 
 import se.rosenbaum.poppoc.core.Storage;
-import se.rosenbaum.poppoc.core.Wallet;
+import se.rosenbaum.poppoc.core.StorageBitcoinjWallet;
 import se.rosenbaum.poppoc.core.ClientException;
 import se.rosenbaum.poppoc.core.Config;
 
@@ -94,8 +94,8 @@ public class BasicServlet extends HttpServlet {
         getServletContext().setAttribute("constants", constants);
     }
 
-    Wallet getWallet() {
-        return (Wallet) getServletContext().getAttribute("wallet");
+    StorageBitcoinjWallet getWallet() {
+        return (StorageBitcoinjWallet) getServletContext().getAttribute("wallet");
     }
 
     Config getConfig() {
