@@ -186,7 +186,7 @@ public class PopValidatorTest extends TestWithWallet {
         return createValidUnsignedPop(fundingTransaction, paymentToProve);
     }
 
-    private Pop getPop(int fundingValue, Coin fee, int... outputValues) throws IOException, InsufficientMoneyException {
+    private Pop getPop(int fundingValue, Coin fee, int... outputValues) throws Exception {
         return getPop(new int[]{fundingValue}, fee, outputValues);
     }
 
@@ -262,7 +262,6 @@ public class PopValidatorTest extends TestWithWallet {
     private void testNonce(long requestedNonce, int... nonceUnsignedBytes) throws Exception {
         Pop pop = getPop(1, Coin.ZERO, 1);
 
-        // Create max unsigned 6 byte number
         byte[] scriptBytes = pop.getOutput(0).getScriptBytes();
         for (int i = 0; i < 6; i++) {
             scriptBytes[35+i] = (byte)nonceUnsignedBytes[i];
@@ -270,6 +269,42 @@ public class PopValidatorTest extends TestWithWallet {
 
         signPop(pop);
         validatePop(pop, requestedNonce);
+    }
+
+    @Test(expected = InvalidPopException.class)
+    public void testVersion0() throws Exception {
+        testVersion(0, 0);
+    }
+
+    @Test
+    public void testVersion1() throws Exception {
+        testVersion(0, 1);
+    }
+
+    @Test(expected = InvalidPopException.class)
+    public void testVersion2() throws Exception {
+        testVersion(0, 2);
+    }
+
+    @Test(expected = InvalidPopException.class)
+    public void testVersion256() throws Exception {
+        testVersion(1, 0);
+    }
+
+    @Test(expected = InvalidPopException.class)
+    public void testVersionMax() throws Exception {
+        testVersion(255, 255);
+    }
+
+    private void testVersion(int... versionUnsignedBytes) throws Exception {
+        Pop pop = getPop(1, Coin.ZERO, 1);
+
+        byte[] scriptBytes = pop.getOutput(0).getScriptBytes();
+        scriptBytes[1] = (byte)versionUnsignedBytes[0];
+        scriptBytes[2] = (byte)versionUnsignedBytes[1];
+
+        signPop(pop);
+        validatePop(pop);
     }
 
     @Test(expected = InvalidPopException.class)
