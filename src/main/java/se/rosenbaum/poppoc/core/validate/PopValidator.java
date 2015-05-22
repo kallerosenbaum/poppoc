@@ -104,7 +104,7 @@ public class PopValidator {
 
     private void checkNonce(byte[] data, Long popRequestNonce) throws InvalidPopException {
         byte[] nonceBytes = new byte[8];
-        System.arraycopy(data, 36, nonceBytes, 3, 5);
+        System.arraycopy(data, 35, nonceBytes, 2, 6);
         long nonce = ByteBuffer.wrap(nonceBytes).getLong();
 
         if (nonce != popRequestNonce) {

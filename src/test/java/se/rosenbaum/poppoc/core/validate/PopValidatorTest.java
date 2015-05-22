@@ -28,8 +28,10 @@ import java.util.Map;
 
 import static org.bitcoinj.core.Wallet.SendRequest;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class PopValidatorTest extends TestWithWallet {
+    public static final long MAX_NONCE = (long) (Math.pow(2, 48) - 1);
     PopValidator sut;
     Wallet payerWallet;
 
@@ -46,13 +48,6 @@ public class PopValidatorTest extends TestWithWallet {
             Transaction transaction = wallet.getTransaction(txid);
             if (transaction != null) {
                 return transaction;
-            }
-            for (Transaction transaction1 : wallet.getTransactions(false)) {
-                for (TransactionInput transactionInput : transaction1.getInputs()) {
-                    if (transactionInput.getOutpoint().getHash().equals(txid)) {
-                        return transactionInput.getOutpoint().getConnectedOutput().getParentTransaction();
-                    }
-                }
             }
             return null;
         }
@@ -222,7 +217,7 @@ public class PopValidatorTest extends TestWithWallet {
         nonceBuffer.putLong(19L);
         byteBuffer.put(nonceBuffer.array(), 2, 6); // nonce
         TransactionOutput invalidPopOutput = new TransactionOutput(params, null, Coin.ZERO, byteBuffer.array());
-
+        signPop(pop);
         testInvalidPopOutput(pop, invalidPopOutput);
     }
 
@@ -240,7 +235,41 @@ public class PopValidatorTest extends TestWithWallet {
         nonceBuffer.putLong(19L);
         byteBuffer.put(nonceBuffer.array(), 2, 5); // nonce
         TransactionOutput invalidPopOutput = new TransactionOutput(params, null, Coin.ZERO, byteBuffer.array());
+        signPop(pop);
         testInvalidPopOutput(pop, invalidPopOutput);
+    }
+
+    @Test
+    public void testValidatePop6ByteNonce() throws Exception {
+        testNonce((long)(Math.pow(2, 41)-1), 1, 255, 255, 255, 255, 255);
+    }
+
+    @Test
+    public void testValidatePop5ByteNonce() throws Exception {
+        testNonce((long)(Math.pow(2, 40)-1), 0, 255, 255, 255, 255, 255);
+    }
+
+    @Test
+    public void testValidatePopMinNonce() throws Exception {
+        testNonce(0L, 0, 0, 0, 0, 0, 0);
+    }
+
+    @Test
+    public void testValidatePopMaxNonce() throws Exception {
+        testNonce(MAX_NONCE, 255, 255, 255, 255, 255, 255);
+    }
+
+    private void testNonce(long requestedNonce, int... nonceUnsignedBytes) throws Exception {
+        Pop pop = getPop(1, Coin.ZERO, 1);
+
+        // Create max unsigned 6 byte number
+        byte[] scriptBytes = pop.getOutput(0).getScriptBytes();
+        for (int i = 0; i < 6; i++) {
+            scriptBytes[35+i] = (byte)nonceUnsignedBytes[i];
+        }
+
+        signPop(pop);
+        validatePop(pop, requestedNonce);
     }
 
     @Test(expected = InvalidPopException.class)
@@ -293,8 +322,12 @@ public class PopValidatorTest extends TestWithWallet {
     }
 
     private void validatePop(Pop pop) throws InvalidPopException {
+        validatePop(pop, 19L);
+    }
+
+    private void validatePop(Pop pop, long nonce) throws InvalidPopException {
         try {
-            sut.validatePop(pop, 19L);
+            sut.validatePop(pop, nonce);
         } catch (InvalidPopException e) {
             System.out.println("Invalid pop (maybe expected): " + e.getMessage());
             throw e;
