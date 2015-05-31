@@ -31,11 +31,8 @@ public abstract class StandardService implements ServiceType {
     protected PopRequest createPopRequest(String txid, Long amount, String label) {
         Random random = new SecureRandom();
 
-        byte[] nonceBytes = new byte[6];
-        random.nextBytes(nonceBytes);
-        byte[] longBytes  = new byte[8];
-        System.arraycopy(nonceBytes, 0, longBytes, 2, 6);
-        long nonce = ByteBuffer.wrap(longBytes).getLong();
+        byte[] nonce = new byte[6];
+        random.nextBytes(nonce);
 
         PopRequest popRequest = new PopRequest(nonce, this);
         popRequest.setAmount(amount);

@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
 
 public class PopRequest implements Serializable {
 
-    Long nonce;
+    byte[] nonce;
     String txid;
     Long amount;
     String label;
@@ -18,12 +18,12 @@ public class PopRequest implements Serializable {
 
     ServiceType serviceType;
 
-    public PopRequest(Long nonce, ServiceType serviceType) {
+    public PopRequest(byte[] nonce, ServiceType serviceType) {
         if (nonce == null) {
             throw new IllegalArgumentException("Nonce must not be null");
         }
-        if (nonce < 0) {
-            throw new IllegalArgumentException("Nonce must not be negative");
+        if (nonce.length != 6) {
+            throw new IllegalArgumentException("Nonce must be of length 6");
         }
         if (serviceType == null) {
             throw new IllegalArgumentException("ServiceType must not be null");
@@ -64,7 +64,7 @@ public class PopRequest implements Serializable {
         this.message = message;
     }
 
-    public Long getNonce() {
+    public byte[] getNonce() {
         return nonce;
     }
 
@@ -75,9 +75,7 @@ public class PopRequest implements Serializable {
     public String createPopRequestUri(String popUrl) throws UnsupportedEncodingException {
         String popRequestUri = "btcpop:?p=" + PopEncodeDecode.popURIEncode(popUrl);
 
-        byte[] nonceBytes = new byte[6];
-        System.arraycopy(ByteBuffer.allocate(8).putLong(getNonce()).array(), 2, nonceBytes, 0, 6);
-        popRequestUri += "&n=" + Base58.encode(nonceBytes);
+        popRequestUri += "&n=" + Base58.encode(nonce);
 
         if (isSet(getTxid())) {
             popRequestUri += "&txid=" + Base58.encode(getTxid().getBytes());

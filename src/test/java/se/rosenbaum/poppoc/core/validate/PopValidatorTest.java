@@ -22,18 +22,35 @@ import se.rosenbaum.poppoc.core.Pop;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.bitcoinj.core.Wallet.SendRequest;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 public class PopValidatorTest extends TestWithWallet {
-    public static final long MAX_NONCE = (long) (Math.pow(2, 48) - 1);
+    public static final byte[] MAX_NONCE = bLength(6, 0xFF);
     PopValidator sut;
     Wallet payerWallet;
+
+    private static byte[] bLength(int times, int value) {
+        byte[] bytes = new byte[times];
+        for (int i = 0; i < times; i++) {
+            bytes[i] = (byte)value;
+        }
+        return bytes;
+
+    }
+
+    private static byte[] b(int... byteValues) {
+        byte[] bytes = new byte[byteValues.length];
+        for (int i = 0; i < bytes.length; i++) {
+            bytes[i] = (byte)byteValues[i];
+        }
+        return bytes;
+    }
 
     @Before
     public void setup() throws Exception {
@@ -239,33 +256,31 @@ public class PopValidatorTest extends TestWithWallet {
         testInvalidPopOutput(pop, invalidPopOutput);
     }
 
-    @Test
-    public void testValidatePop6ByteNonce() throws Exception {
-        testNonce((long)(Math.pow(2, 41)-1), 1, 255, 255, 255, 255, 255);
+    @Test(expected = InvalidPopException.class)
+    public void testValidatePopMismatchingNonce() throws Exception {
+        testNonce(b(1, 2, 4, 4, 5, 6), b(1, 2, 3, 4, 5, 6));
     }
 
     @Test
-    public void testValidatePop5ByteNonce() throws Exception {
-        testNonce((long)(Math.pow(2, 40)-1), 0, 255, 255, 255, 255, 255);
+    public void testValidatePop3ByteNonce() throws Exception {
+        testNonce(b(0, 0, 0, 255, 255, 255), b(0, 0, 0, 255, 255, 255));
     }
 
     @Test
     public void testValidatePopMinNonce() throws Exception {
-        testNonce(0L, 0, 0, 0, 0, 0, 0);
+        testNonce(bLength(6, 0), bLength(6, 0));
     }
 
     @Test
     public void testValidatePopMaxNonce() throws Exception {
-        testNonce(MAX_NONCE, 255, 255, 255, 255, 255, 255);
+        testNonce(MAX_NONCE, MAX_NONCE);
     }
 
-    private void testNonce(long requestedNonce, int... nonceUnsignedBytes) throws Exception {
+    private void testNonce(byte[] requestedNonce, byte[] nonce) throws Exception {
         Pop pop = getPop(1, Coin.ZERO, 1);
 
         byte[] scriptBytes = pop.getOutput(0).getScriptBytes();
-        for (int i = 0; i < 6; i++) {
-            scriptBytes[35+i] = (byte)nonceUnsignedBytes[i];
-        }
+        System.arraycopy(nonce, 0, scriptBytes, 35, 6);
 
         signPop(pop);
         validatePop(pop, requestedNonce);
@@ -276,19 +291,24 @@ public class PopValidatorTest extends TestWithWallet {
         testVersion(0, 0);
     }
 
-    @Test
-    public void testVersion1() throws Exception {
+    @Test(expected = InvalidPopException.class)
+    public void testVersion01() throws Exception {
         testVersion(0, 1);
     }
 
     @Test(expected = InvalidPopException.class)
-    public void testVersion2() throws Exception {
+    public void testVersion02() throws Exception {
         testVersion(0, 2);
     }
 
-    @Test(expected = InvalidPopException.class)
-    public void testVersion256() throws Exception {
+    @Test
+    public void testVersion10() throws Exception {
         testVersion(1, 0);
+    }
+
+    @Test(expected = InvalidPopException.class)
+    public void testVersion20() throws Exception {
+        testVersion(2, 0);
     }
 
     @Test(expected = InvalidPopException.class)
@@ -357,10 +377,10 @@ public class PopValidatorTest extends TestWithWallet {
     }
 
     private void validatePop(Pop pop) throws InvalidPopException {
-        validatePop(pop, 19L);
+        validatePop(pop, new byte[] {0, 0, 0, 0, 0, 19});
     }
 
-    private void validatePop(Pop pop, long nonce) throws InvalidPopException {
+    private void validatePop(Pop pop, byte[] nonce) throws InvalidPopException {
         try {
             sut.validatePop(pop, nonce);
         } catch (InvalidPopException e) {
@@ -443,11 +463,17 @@ public class PopValidatorTest extends TestWithWallet {
 
         ByteBuffer byteBuffer = ByteBuffer.allocate(41);
         byteBuffer.put((byte)ScriptOpCodes.OP_RETURN);
-        byteBuffer.putShort((short)1); // version 1
+
+        // version 0x01 0x00 (1 little endian)
+        byteBuffer.put((byte)1);
+        byteBuffer.put((byte)0);
+
         byteBuffer.put(txidToProve.getBytes()); // txid
+
         ByteBuffer nonceBuffer = ByteBuffer.allocate(8);
         nonceBuffer.putLong(nonce);
         byteBuffer.put(nonceBuffer.array(), 2, 6); // nonce
+
         TransactionOutput output = new TransactionOutput(params, null, Coin.valueOf(amount), byteBuffer.array());
         return output;
     }

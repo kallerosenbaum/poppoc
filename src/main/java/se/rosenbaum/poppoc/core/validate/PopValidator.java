@@ -28,7 +28,7 @@ public class PopValidator {
      * This will check the PoP according to the
      * <a href="https://github.com/kallerosenbaum/poppoc/wiki/Proof-of-Payment">specification</a>
      */
-    public Transaction validatePop(Pop pop, Long nonce) throws InvalidPopException {
+    public Transaction validatePop(Pop pop, byte[] nonce) throws InvalidPopException {
         // 1 Basic checks
         if (pop == null) {
             throw new InvalidPopException("Pop is null");
@@ -102,12 +102,11 @@ public class PopValidator {
         return opReturnPopOutputValue;
     }
 
-    private void checkNonce(byte[] data, Long popRequestNonce) throws InvalidPopException {
-        byte[] nonceBytes = new byte[8];
-        System.arraycopy(data, 35, nonceBytes, 2, 6);
-        long nonce = ByteBuffer.wrap(nonceBytes).getLong();
+    private void checkNonce(byte[] data, byte[] popRequestNonce) throws InvalidPopException {
+        byte[] nonceBytes = new byte[6];
+        System.arraycopy(data, 35, nonceBytes, 0, 6);
 
-        if (nonce != popRequestNonce) {
+        if (!Arrays.equals(nonceBytes, popRequestNonce)) {
             throw new InvalidPopException("Wrong nonce");
         }
     }
@@ -174,13 +173,10 @@ public class PopValidator {
             throw new InvalidPopException("Wrong opcode: " + scriptBytes[0]);
         }
 
-        short version = ByteBuffer.wrap(scriptBytes, 1, 2).getShort();
-        if (version != 1) {
-            throw new InvalidPopException("Wrong version: " + version + " expected 1");
+        if (scriptBytes[1] != 1 || scriptBytes[2] != 0) {
+            throw new InvalidPopException("Wrong version: " + scriptBytes[1] + " " + scriptBytes[2] + ". Expected 0x01 0x00");
         }
 
         return scriptBytes;
     }
-
-
 }
