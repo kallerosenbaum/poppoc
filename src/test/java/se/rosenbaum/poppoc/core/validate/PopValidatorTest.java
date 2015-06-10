@@ -8,6 +8,7 @@ import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.Wallet;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptChunk;
@@ -22,7 +23,6 @@ import se.rosenbaum.poppoc.core.Pop;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +32,7 @@ import static org.junit.Assert.assertEquals;
 
 public class PopValidatorTest extends TestWithWallet {
     public static final byte[] MAX_NONCE = bLength(6, 0xFF);
+    public static final int LOCK_TIME = 499999999;
     PopValidator sut;
     Wallet payerWallet;
 
@@ -101,13 +102,27 @@ public class PopValidatorTest extends TestWithWallet {
     }
 
     @Test(expected = InvalidPopException.class)
-    public void testValidatePopPopOutputNotFirst() throws Exception {
+    public void testValidatePopTooManyOutputs() throws Exception {
         Pop pop = getPop(1, Coin.ZERO, 1);
 
-        List<TransactionOutput> outputs = new ArrayList<TransactionOutput>(pop.getOutputs());
-        pop.clearOutputs();
-        pop.addOutput(outputs.get(1)); // Swap places
-        pop.addOutput(outputs.get(0));
+        // Add another output.
+        pop.addOutput(new TransactionOutput(params, pop, Coin.CENT, wallet.currentReceiveAddress()));
+        signPop(pop);
+        validatePop(pop);
+    }
+
+    @Test(expected = InvalidPopException.class)
+    public void testValidatePopPositiveOutputValue() throws Exception {
+        Pop pop = getPop(1, Coin.ZERO, 1);
+        pop.getOutput(0).setValue(Coin.CENT);
+        signPop(pop);
+        validatePop(pop);
+    }
+
+    @Test(expected = InvalidPopException.class)
+    public void testValidatePopNegativeOutputValue() throws Exception {
+        Pop pop = getPop(1, Coin.ZERO, 1);
+        pop.getOutput(0).setValue(Coin.CENT.negate());
         signPop(pop);
         validatePop(pop);
     }
@@ -147,52 +162,42 @@ public class PopValidatorTest extends TestWithWallet {
     }
 
     @Test(expected = InvalidPopException.class)
-    public void testValidatePopExtraOP_RETURNinProvenTxANDinPop() throws Exception {
+    public void testValidatePopLockTime0() throws Exception {
         Pop pop = getPop(2, Coin.COIN, 1, 0);
-        pop.addOutput(Coin.ZERO, new Script(new byte[]{ScriptOpCodes.OP_RETURN}));
+        pop.setLockTime(0);
         signPop(pop);
         validatePop(pop);
     }
 
-    @Test
-    public void testValidatePopOP_RETURNwithZeroInProvenTx() throws Exception {
+    @Test(expected = InvalidPopException.class)
+    public void testValidatePopLockTime499999998() throws Exception {
         Pop pop = getPop(2, Coin.COIN, 1, 0);
+        pop.setLockTime(LOCK_TIME - 1);
         signPop(pop);
-        validatePop(pop);
-    }
-
-    @Test
-    public void testValidatePopOP_RETURNwithOneBTCInProvenTx() throws Exception {
-        Pop pop = getPop(3, Coin.COIN, 1, -1);
-        signPop(pop);
-        assertEquals(2, pop.getOutputs().size());
         validatePop(pop);
     }
 
     @Test(expected = InvalidPopException.class)
-    public void testValidatePopWithOP_RETURNwithOneBTCAndFeeAbsentFromPopOutput() throws Exception {
-        Pop pop = getPop(4, Coin.valueOf(2, 0), 1, -1);
-        pop.getOutput(0).setValue(Coin.COIN); // Only value from OP_RETURN, none from the 2 BTC fee
+    public void testValidatePopOneSeqNr1() throws Exception {
+        Pop pop = getPop(new int[] {2, 3}, Coin.COIN, 4, 0);
+        pop.getInput(1).setSequenceNumber(1L);
         signPop(pop);
-        assertEquals(2, pop.getOutputs().size());
         validatePop(pop);
     }
 
     @Test(expected = InvalidPopException.class)
-    public void testValidatePopWithoutOP_RETURNwithOneBTCAndFeeAbsentFromPopOutput() throws Exception {
-        Pop pop = getPop(4, Coin.valueOf(3, 0), 1);
-        pop.getOutput(0).setValue(Coin.ZERO); // Fee is not moved to input 0
+    public void testValidatePopOneSeqNrfeffffff() throws Exception {
+        Pop pop = getPop(new int[] {2, 3}, Coin.COIN, 4, 0);
+        pop.getInput(0).setSequenceNumber(Utils.readUint32(b(254, 255, 255, 255), 0));
         signPop(pop);
-        assertEquals(2, pop.getOutputs().size());
         validatePop(pop);
     }
 
     @Test(expected = InvalidPopException.class)
-    public void testValidatePopWithoutOP_RETURNwithOneBTCAndFeeWrongValueInPopOutput() throws Exception {
-        Pop pop = getPop(4, Coin.valueOf(3, 0), 1);
-        pop.getOutput(0).setValue(Coin.COIN); // Only part of the fee is moved to input 0
+    public void testValidatePopOneSeqNrffffffff() throws Exception {
+        Pop pop = getPop(new int[] {2, 3}, Coin.COIN, 4, 0);
+        pop.getInput(0).setSequenceNumber(Utils.readUint32(bLength(4, 255), 0));
         signPop(pop);
-        assertEquals(2, pop.getOutputs().size());
         validatePop(pop);
     }
 
@@ -205,19 +210,6 @@ public class PopValidatorTest extends TestWithWallet {
 
     private Pop getPop(int fundingValue, Coin fee, int... outputValues) throws Exception {
         return getPop(new int[]{fundingValue}, fee, outputValues);
-    }
-
-    @Test(expected = InvalidPopException.class)
-    public void testValidatePopOP_RETURNwithOneBTCInProvenTxWrongPopOutput() throws Exception {
-        List<Transaction> fundingTransaction = createFundingTransaction(3);
-        Transaction paymentToProve = createPaymentToProve(fundingTransaction, Coin.COIN, 1, -1);
-        assertEquals(2, paymentToProve.getOutputs().size());
-        Pop pop = createValidUnsignedPop(fundingTransaction, paymentToProve);
-        pop.getOutput(0).setValue(Coin.COIN); // The value of the OP_RETURN is not added to the pop output, but
-                                              // instead spent as a fee. That is an invalid pop.
-        signPop(pop);
-        assertEquals(2, pop.getOutputs().size());
-        validatePop(pop);
     }
 
     @Test(expected = InvalidPopException.class)
@@ -335,7 +327,7 @@ public class PopValidatorTest extends TestWithWallet {
 
         byte[] bytes = paymentToProve.getHash().getBytes();
         bytes[0]++;
-        TransactionOutput invalidPopOutput = createPopOutput(Sha256Hash.create(bytes), 19, 0);
+        TransactionOutput invalidPopOutput = createPopOutput(Sha256Hash.create(bytes), 19);
 
         testInvalidPopOutput(pop, invalidPopOutput);
     }
@@ -345,16 +337,7 @@ public class PopValidatorTest extends TestWithWallet {
         List<Transaction> fundingTransaction = createFundingTransaction(1);
         Transaction paymentToProve = createPaymentToProve(fundingTransaction, Coin.ZERO, 1);
         Pop pop = createValidUnsignedPop(fundingTransaction, paymentToProve);
-        TransactionOutput invalidPopOutput = createPopOutput(paymentToProve.getHash(), 18, 0);
-        testInvalidPopOutput(pop, invalidPopOutput);
-    }
-
-    @Test(expected = InvalidPopException.class)
-    public void testValidatePopOutputInvalidValue() throws IOException, InsufficientMoneyException, InvalidPopException {
-        List<Transaction> fundingTransaction = createFundingTransaction(1);
-        Transaction paymentToProve = createPaymentToProve(fundingTransaction, Coin.ZERO, 1);
-        Pop pop = createValidUnsignedPop(fundingTransaction, paymentToProve);
-        TransactionOutput invalidPopOutput = createPopOutput(paymentToProve.getHash(), 19, 1);
+        TransactionOutput invalidPopOutput = createPopOutput(paymentToProve.getHash(), 18);
         testInvalidPopOutput(pop, invalidPopOutput);
     }
 
@@ -363,15 +346,13 @@ public class PopValidatorTest extends TestWithWallet {
         List<Transaction> fundingTransaction = createFundingTransaction(1);
         Transaction paymentToProve = createPaymentToProve(fundingTransaction, Coin.ZERO, 1);
         Pop pop = createValidUnsignedPop(fundingTransaction, paymentToProve);
-        TransactionOutput invalidPopOutput = createPopOutput(paymentToProve.getHash(), 19, 0);
+        TransactionOutput invalidPopOutput = createPopOutput(paymentToProve.getHash(), 19);
         testInvalidPopOutput(pop, invalidPopOutput);
     }
 
     private void testInvalidPopOutput(Pop pop, TransactionOutput invalidPopOutput) throws IOException, InsufficientMoneyException, InvalidPopException {
-        List<TransactionOutput> outputs = new ArrayList<TransactionOutput>(pop.getOutputs());
         pop.clearOutputs();
         pop.addOutput(invalidPopOutput);
-        pop.addOutput(outputs.get(1));
         signPop(pop);
         validatePop(pop);
     }
@@ -398,8 +379,7 @@ public class PopValidatorTest extends TestWithWallet {
         // Copy the txToProve
         Pop pop = new Pop(params, txToProve.bitcoinSerialize());
         pop.clearOutputs();
-        pop.addOutput(createPopOutput(txToProve.getHash(), 19L, 0));
-        copyOutputs(txToProve, pop);
+        pop.addOutput(createPopOutput(txToProve.getHash(), 19L));
 
         Map<Sha256Hash, Transaction> fundingMap = new HashMap<Sha256Hash, Transaction>();
         for (Transaction transaction : funding) {
@@ -408,7 +388,10 @@ public class PopValidatorTest extends TestWithWallet {
 
         for (TransactionInput transactionInput : pop.getInputs()) {
             transactionInput.connect(fundingMap, TransactionInput.ConnectMode.ABORT_ON_CONFLICT);
+            transactionInput.setSequenceNumber(0L);
         }
+
+        pop.setLockTime(LOCK_TIME);
         return pop;
     }
 
@@ -446,20 +429,7 @@ public class PopValidatorTest extends TestWithWallet {
         return fundingTransactions;
     }
 
-    private void copyOutputs(Transaction txToProve, Transaction pop) {
-
-        for (TransactionOutput transactionOutput : txToProve.getOutputs()) {
-            if (transactionOutput.getScriptBytes()[0] == ScriptOpCodes.OP_RETURN) {
-                pop.getOutput(0).setValue(pop.getOutput(0).getValue().add(transactionOutput.getValue()));
-            } else {
-                pop.addOutput(transactionOutput.duplicateDetached());
-            }
-        }
-        pop.getOutput(0).setValue(pop.getOutput(0).getValue().add(txToProve.getFee()));
-    }
-
-
-    private TransactionOutput createPopOutput(Sha256Hash txidToProve, long nonce, long amount) {
+    private TransactionOutput createPopOutput(Sha256Hash txidToProve, long nonce) {
 
         ByteBuffer byteBuffer = ByteBuffer.allocate(41);
         byteBuffer.put((byte)ScriptOpCodes.OP_RETURN);
@@ -474,7 +444,7 @@ public class PopValidatorTest extends TestWithWallet {
         nonceBuffer.putLong(nonce);
         byteBuffer.put(nonceBuffer.array(), 2, 6); // nonce
 
-        TransactionOutput output = new TransactionOutput(params, null, Coin.valueOf(amount), byteBuffer.array());
+        TransactionOutput output = new TransactionOutput(params, null, Coin.ZERO, byteBuffer.array());
         return output;
     }
 

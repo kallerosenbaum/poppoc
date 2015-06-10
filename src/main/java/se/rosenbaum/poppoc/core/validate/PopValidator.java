@@ -12,11 +12,11 @@ import org.slf4j.LoggerFactory;
 import se.rosenbaum.poppoc.core.InvalidPopException;
 import se.rosenbaum.poppoc.core.Pop;
 
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
 public class PopValidator {
+    private static final long LOCK_TIME = 499999999;
     Logger logger = LoggerFactory.getLogger(PopValidator.class);
     TransactionStore transactionStore;
 
@@ -35,30 +35,36 @@ public class PopValidator {
         }
         try {
             pop.verify();
-        } catch (VerifyError e) {
+        } catch (VerificationException e) {
             throw new InvalidPopException("Basic verification failed.", e);
         }
 
-        // 2 Check OP_RETURN output
+        // 2 Check lock_time
+        checkLockTime(pop);
+
+        // 3 Check the "PoP output"
         byte[] data = checkOutput(pop);
+
+        // 4 Check nonce
+        checkNonce(data, nonce);
 
         byte[] txidBytes = new byte[32];
         System.arraycopy(data, 3, txidBytes, 0, 32);
         Sha256Hash txid = new Sha256Hash(txidBytes);
         Transaction provenTransaction = getTransaction(txid);
 
-        // 3 Check other outputs
-        Coin opReturnOutputValue = checkOutputs(pop, provenTransaction);
-
-        // 4 Check nonce
-        checkNonce(data, nonce);
-
         // 5 Check inputs
         // 6 Check signatures
-        checkInputsAndSignatures(pop, provenTransaction, opReturnOutputValue);
+        checkInputsAndSignatures(pop, provenTransaction);
 
         // No exceptions, means PoP valid.
         return provenTransaction;
+    }
+
+    private void checkLockTime(Pop pop) throws InvalidPopException {
+        if (pop.getLockTime() != LOCK_TIME) {
+            throw new InvalidPopException("Invalid lock_time. Expected " + LOCK_TIME);
+        }
     }
 
     private Transaction getTransaction(Sha256Hash txid) throws InvalidPopException {
@@ -111,14 +117,13 @@ public class PopValidator {
         }
     }
 
-    private void checkInputsAndSignatures(Pop pop, Transaction provenTransaction, Coin opReturnOutputValue) throws InvalidPopException {
+    private void checkInputsAndSignatures(Pop pop, Transaction provenTransaction) throws InvalidPopException {
         List<TransactionInput> popInputs = pop.getInputs();
         List<TransactionInput> blockchainTxInputs = provenTransaction.getInputs();
         if (popInputs.size() != blockchainTxInputs.size()) {
             throw new InvalidPopException("Wrong number of inputs");
         }
 
-        Coin inputValue = Coin.ZERO;
         for (int i = 0; i < blockchainTxInputs.size(); i++) {
             // Here I check that the inputs of the pop are in the same order
             // as in the payment transaction.
@@ -127,6 +132,16 @@ public class PopValidator {
             if (!popInput.getOutpoint().equals(bcInput.getOutpoint())) {
                 throw new InvalidPopException("Mismatching inputs");
             }
+            // Also check the sequence number of the pop input.
+            if (popInput.getSequenceNumber() != 0L) {
+                throw new InvalidPopException("Invalide sequence number. Must be 0.");
+            }
+        }
+
+
+        for (int i = 0; i < blockchainTxInputs.size(); i++) {
+            TransactionInput popInput = popInputs.get(i);
+            TransactionInput bcInput = blockchainTxInputs.get(i);
             // Check signature
             if (bcInput.getConnectedOutput() == null || popInput.getConnectedOutput() == null) {
                 // connect the input to the right transaction:
@@ -141,7 +156,6 @@ public class PopValidator {
                 bcInput.connect(inputTx, TransactionInput.ConnectMode.ABORT_ON_CONFLICT);
                 popInput.connect(inputTx, TransactionInput.ConnectMode.ABORT_ON_CONFLICT);
             }
-            inputValue = inputValue.add(popInput.getConnectedOutput().getValue());
             try {
                 popInput.verify();
             } catch (VerificationException e) {
@@ -149,21 +163,18 @@ public class PopValidator {
                 throw new InvalidPopException("Signature verification failed", e);
             }
         }
-
-        Coin expectedPopOutputValue = opReturnOutputValue.add(provenTransaction.getFee());
-        Coin popOutputValue = pop.getOutput(0).getValue();
-        if (!popOutputValue.equals(expectedPopOutputValue)) {
-            throw new InvalidPopException("Unexpected value of PoP output. Expected " + expectedPopOutputValue +
-                    ". Got " + popOutputValue);
-        }
     }
 
     private byte[] checkOutput(Pop pop) throws InvalidPopException {
         List<TransactionOutput> outputs = pop.getOutputs();
-        if (outputs == null || outputs.size() < 2) {
+        if (outputs == null || outputs.size() != 1) {
             throw new InvalidPopException("Wrong number of outputs. Expected at least 2.");
         }
         TransactionOutput output = outputs.get(0);
+
+        if (!Coin.ZERO.equals(output.getValue())) {
+            throw new InvalidPopException("Invalid value of PoP output. Must be 0");
+        }
 
         byte[] scriptBytes = output.getScriptBytes();
         if (scriptBytes == null || scriptBytes.length != 41) {
