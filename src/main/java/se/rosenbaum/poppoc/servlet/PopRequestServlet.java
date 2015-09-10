@@ -1,6 +1,7 @@
 package se.rosenbaum.poppoc.servlet;
 
-import se.rosenbaum.poppoc.core.PopRequest;
+import se.rosenbaum.jpop.PopRequestURI;
+import se.rosenbaum.poppoc.core.PopRequestWithServiceType;
 import se.rosenbaum.poppoc.core.Storage;
 import se.rosenbaum.poppoc.service.ServiceType;
 
@@ -10,18 +11,18 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 
 public class PopRequestServlet extends BasicServlet {
 
     protected void createPopRequest(HttpServletRequest request, HttpServletResponse response, ServiceType nakedServiceType) throws ServletException, IOException {
-        PopRequest popRequest = nakedServiceType.getPopRequest();
+        PopRequestWithServiceType popRequest = nakedServiceType.getPopRequest();
 
         Storage storage = getStorage();
         int requestId = storage.store(popRequest);
-
         String contextPath = getServletContext().getContextPath();
-        String popRequestUri = createPopRequestUri(popRequest, contextPath, requestId);
+        popRequest.setDestination(getConfig().getPopDesitnation() + contextPath + "/Pop/" + requestId);
+
+        String popRequestUri = new PopRequestURI(popRequest).toURIString();
         String popPollUrl = craetePopPollUrl(requestId, contextPath);
 
         request.setAttribute(JspConst.POP_REQUEST.val(), popRequestUri);
@@ -37,10 +38,5 @@ public class PopRequestServlet extends BasicServlet {
     private String craetePopPollUrl(int requestId, String contextPath) {
         String popPollUrl = getConfig().getPopDesitnation() + contextPath + "/PopPoll/?" + JspConst.REQUEST_ID.val() + "=" + requestId;
         return popPollUrl;
-    }
-
-    protected String createPopRequestUri(PopRequest popRequest, String contextPath, int requestId) throws UnsupportedEncodingException {
-        String popUrl = getConfig().getPopDesitnation() + contextPath + "/Pop/" + requestId;
-        return popRequest.createPopRequestUri(popUrl);
     }
 }

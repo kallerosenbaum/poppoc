@@ -8,9 +8,9 @@ import com.squareup.okhttp.Response;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
+import se.rosenbaum.jpop.validate.TransactionStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.rosenbaum.poppoc.core.validate.TransactionStore;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;

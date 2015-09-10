@@ -1,10 +1,10 @@
 package se.rosenbaum.poppoc.service;
 
 import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Sha256Hash;
-import se.rosenbaum.poppoc.core.PopRequest;
+import se.rosenbaum.poppoc.core.PopRequestWithServiceType;
 
-import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.Date;
 import java.util.Random;
@@ -28,16 +28,20 @@ public abstract class StandardService implements ServiceType {
         return paidSatoshis;
     }
 
-    protected PopRequest createPopRequest(String txid, Long amount, String label) {
+    protected PopRequestWithServiceType createPopRequest(String txid, Long amount, String label) {
         Random random = new SecureRandom();
 
         byte[] nonce = new byte[6];
         random.nextBytes(nonce);
 
-        PopRequest popRequest = new PopRequest(nonce, this);
-        popRequest.setAmount(amount);
+        PopRequestWithServiceType popRequest = new PopRequestWithServiceType(nonce, this);
+        if (amount != null) {
+            popRequest.setAmount(Coin.valueOf(amount));
+        }
         popRequest.setLabel(label);
-        popRequest.setTxid(txid);
+        if (txid != null) {
+            popRequest.setTxid(Sha256Hash.wrap(txid));
+        }
         return popRequest;
     }
 

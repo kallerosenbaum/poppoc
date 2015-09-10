@@ -1,7 +1,8 @@
 package se.rosenbaum.poppoc.service;
 
 import org.bitcoinj.core.Address;
-import se.rosenbaum.poppoc.core.PopRequest;
+import se.rosenbaum.jpop.PopRequest;
+import se.rosenbaum.poppoc.core.PopRequestWithServiceType;
 
 import java.util.Map;
 
@@ -10,7 +11,7 @@ public class SimpleService extends StandardService {
         return 1;
     }
 
-    public PopRequest getPopRequest() {
+    public PopRequestWithServiceType getPopRequest() {
         return createPopRequest(null, null, "service1");
     }
 

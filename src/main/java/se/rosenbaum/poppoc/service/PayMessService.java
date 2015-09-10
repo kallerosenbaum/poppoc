@@ -2,7 +2,7 @@ package se.rosenbaum.poppoc.service;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
-import se.rosenbaum.poppoc.core.PopRequest;
+import se.rosenbaum.poppoc.core.PopRequestWithServiceType;
 import se.rosenbaum.poppoc.paymess.Message;
 import se.rosenbaum.poppoc.paymess.MessageSpace;
 
@@ -16,7 +16,7 @@ public class PayMessService extends StandardService {
         return 2;
     }
 
-    public PopRequest getPopRequest() {
+    public PopRequestWithServiceType getPopRequest() {
         return createPopRequest(null, null, "PayMess " + messageSpace.getId());
     }
 
@@ -76,7 +76,7 @@ public class PayMessService extends StandardService {
             return false;
         }
         PayMessService other = (PayMessService)serviceType;
-        return messageSpace.getId() == other.messageSpace.getId();
+        return messageSpace.getId().equals(other.messageSpace.getId());
     }
 
 

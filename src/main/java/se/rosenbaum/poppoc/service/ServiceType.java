@@ -2,7 +2,7 @@ package se.rosenbaum.poppoc.service;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Sha256Hash;
-import se.rosenbaum.poppoc.core.PopRequest;
+import se.rosenbaum.poppoc.core.PopRequestWithServiceType;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -10,7 +10,7 @@ import java.util.Map;
 
 public interface ServiceType extends Serializable {
     int getServiceId();
-    PopRequest getPopRequest();
+    PopRequestWithServiceType getPopRequest();
     Address setPaymentAddress(Address address);
     Address getPaymentAddress();
     String getPaymentUri(Address address);

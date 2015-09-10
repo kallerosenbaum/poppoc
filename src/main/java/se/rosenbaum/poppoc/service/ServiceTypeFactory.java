@@ -1,9 +1,5 @@
 package se.rosenbaum.poppoc.service;
 
-/**
- * User: kalle
- * Date: 4/29/15 4:23 PM
- */
 public class ServiceTypeFactory {
     public ServiceType createServiceType(int serviceId) {
         switch (serviceId) {

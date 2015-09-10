@@ -2,6 +2,7 @@ package se.rosenbaum.poppoc.core;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Sha256Hash;
+import se.rosenbaum.jpop.PopRequest;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
@@ -43,7 +44,7 @@ public class Storage implements ServletContextListener {
     private Cache<Address, ServiceType> paymentRequests; // paymentAddress -> serviceType
     private Cache<Sha256Hash, ServiceType> paidServices; // txid           -> serviceType
     private Cache<Address, Sha256Hash> paidToAddresses;  // paymentAddress -> txid
-    private Cache<Integer, PopRequest> popRequests;      // requestId      -> PopRequest
+    private Cache<Integer, PopRequestWithServiceType> popRequests;      // requestId      -> PopRequestWithServiceType
     private Cache<Integer, ServiceType> verifiedPops;    // requestId      -> serviceType
 
     private Cache<Integer, Long> maxUniqueLong;          // 1 -> maxLongEverUsed
@@ -94,7 +95,7 @@ public class Storage implements ServletContextListener {
      * Step 5: A PopRequest is created, stored here, and sent to the user. The
      * returned requestId is later used to check the Pop against the PopRequest.
      */
-    public int store(PopRequest request) {
+    public int store(PopRequestWithServiceType request) {
         Integer requestId = id.getAndIncrement();
         popRequests.put(requestId, request);
         return requestId;
@@ -103,7 +104,7 @@ public class Storage implements ServletContextListener {
     /**
      * Step 6: Get the PopRequest in order to validate an incoming Pop.
      */
-    public PopRequest getPopRequest(int requestId) {
+    public PopRequestWithServiceType getPopRequest(int requestId) {
         return popRequests.get(requestId);
     }
 
@@ -111,7 +112,7 @@ public class Storage implements ServletContextListener {
      * Step 7: Store the information that the Pop has been received and verified
      */
     public void storeVerifiedPop(int requestId, Sha256Hash txid) {
-        PopRequest popRequest = popRequests.remove(requestId);
+        PopRequestWithServiceType popRequest = popRequests.remove(requestId);
         if (popRequest == null && verifiedPops.get(requestId) != null) {
             return; // already verified. Actually an error condition.
         }

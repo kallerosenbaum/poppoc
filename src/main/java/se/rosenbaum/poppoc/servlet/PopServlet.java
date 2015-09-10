@@ -2,15 +2,17 @@ package se.rosenbaum.poppoc.servlet;
 
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
+import se.rosenbaum.jpop.Pop;
+import se.rosenbaum.jpop.PopRequest;
+import se.rosenbaum.jpop.validate.InvalidPopException;
+import se.rosenbaum.jpop.validate.PopValidator;
+import se.rosenbaum.jpop.validate.TransactionStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.rosenbaum.poppoc.core.Config;
-import se.rosenbaum.poppoc.core.InvalidPopException;
-import se.rosenbaum.poppoc.core.Pop;
-import se.rosenbaum.poppoc.core.PopRequest;
+import se.rosenbaum.poppoc.core.PopRequestWithServiceType;
 import se.rosenbaum.poppoc.core.Storage;
 import se.rosenbaum.poppoc.core.TransactionDownloader;
-import se.rosenbaum.poppoc.core.validate.PopValidator;
 import se.rosenbaum.poppoc.service.ServiceType;
 
 import javax.servlet.ServletException;
@@ -42,7 +44,7 @@ public class PopServlet extends BasicServlet {
         }
 
         Storage storage = getStorage();
-        PopRequest popRequest = storage.getPopRequest(requestId);
+        PopRequestWithServiceType popRequest = storage.getPopRequest(requestId);
         if (popRequest == null) {
             replyError("No PoP request associated with requestId " + requestId, response, null);
             return;
@@ -105,7 +107,7 @@ public class PopServlet extends BasicServlet {
         }
     }
 
-    Sha256Hash validatePop(TransactionDownloader transactionDownloader, Pop pop, PopRequest popRequest) throws InvalidPopException {
+    Sha256Hash validatePop(TransactionStore transactionDownloader, Pop pop, PopRequestWithServiceType popRequest) throws InvalidPopException {
 
         PopValidator validator = new PopValidator(transactionDownloader);
 
@@ -131,7 +133,7 @@ public class PopServlet extends BasicServlet {
         return provenTxid;
     }
 
-    private void checkPaysForCorrectService(PopRequest popRequest, Transaction blockchainTx) throws InvalidPopException {
+    private void checkPaysForCorrectService(PopRequestWithServiceType popRequest, Transaction blockchainTx) throws InvalidPopException {
         boolean paysForCorrectService = false;
         ServiceType serviceTypeForPayment = getStorage().getServiceTypeForPayment(blockchainTx.getHash());
         if (serviceTypeForPayment != null && serviceTypeForPayment.isSameServiceType(popRequest.getServiceType())) {
