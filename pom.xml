@@ -15,7 +15,7 @@
         <jstl.version>1.2</jstl.version>
         <taglibs-standard-impl.version>1.2.3</taglibs-standard-impl.version>
         <bitcoinj.version>0.13.2</bitcoinj.version>
-        <jpop.version>1.0-SNAPSHOT</jpop.version>
+        <jpop.version>0.3</jpop.version>
         <ehcache.version>2.6.9</ehcache.version>
         <qrgen.version>2.0</qrgen.version>
         <maven-war-plugin.version>2.6</maven-war-plugin.version>
