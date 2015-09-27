@@ -41,6 +41,7 @@ public class PopServlet extends BasicServlet {
 
         if (!"application/bitcoin-pop".equals(request.getContentType())) {
             replyError("Unexpected content type. Expected " + CONTENT_TYPE, response, null);
+            return;
         }
 
         Storage storage = getStorage();
