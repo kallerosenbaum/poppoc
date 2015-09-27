@@ -39,7 +39,7 @@ public class PopServlet extends BasicServlet {
             return;
         }
 
-        if ("application/bitcoin-pop".equals(request.getContentType())) {
+        if (!"application/bitcoin-pop".equals(request.getContentType())) {
             replyError("Unexpected content type. Expected " + CONTENT_TYPE, response, null);
         }
 
