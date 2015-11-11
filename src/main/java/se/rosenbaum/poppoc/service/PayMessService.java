@@ -21,7 +21,7 @@ public class PayMessService extends StandardService {
     }
 
     public String getPaymentUri(Address address) {
-        return "bitcoin:" + address.toString() + "?label=PayMess " + messageSpace.getId() + "&amount=" + PRICE_SATOSHIS*Math.pow(10, -8);
+        return "bitcoin:" + address.toString() + "?label=PayMess%20" + messageSpace.getId() + "&amount=" + PRICE_SATOSHIS*Math.pow(10, -8);
     }
 
     public boolean isPaidFor() {
