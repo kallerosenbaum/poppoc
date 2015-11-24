@@ -58,6 +58,7 @@ public class StorageBitcoinjWallet implements ServletContextListener, Wallet {
                 return;
             }
             SendRequest sendRequest = SendRequest.emptyWallet(addressToMoveIncomingFundsTo);
+            sendRequest.feePerKb = Coin.MILLICOIN.divide(10);
             try {
                 logger.info("Sending balance: " + balance.toFriendlyString());
                 wallet.sendCoins(sendRequest);
