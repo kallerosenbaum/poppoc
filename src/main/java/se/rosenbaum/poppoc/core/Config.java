@@ -2,6 +2,7 @@ package se.rosenbaum.poppoc.core;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
+import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,7 @@ public class Config implements ServletContextListener {
         }
     }
 
-    private NetworkParameters networkParameters;
+    private Context context;
     private File walletDirectory;
     private File cachePersistenceDirectory;
     private String popDesitnation;
@@ -45,7 +46,11 @@ public class Config implements ServletContextListener {
     private String txServicePassword;
 
     public NetworkParameters getNetworkParameters() {
-        return networkParameters;
+        return getContext().getParams();
+    }
+
+    public Context getContext() {
+        return context;
     }
 
     public File getWalletDirectory() {
@@ -81,12 +86,13 @@ public class Config implements ServletContextListener {
     }
 
     public void contextInitialized(ServletContextEvent servletContextEvent) {
-        ServletContext context = servletContextEvent.getServletContext();
-        networkParameters = NetworkParameters.fromID(getConfigParameter(context, Param.NETWORK));
-        walletDirectory = new File(getConfigParameter(context, Param.WALLET_DIR));
-        popDesitnation = getConfigParameter(context, Param.POP_DESTINATION);
-        cachePersistenceDirectory = new File(getConfigParameter(context, Param.CACHE_PERSISTENCE_DIR));
-        String addressString = getConfigParameter(context, Param.SEND_FUNDS_TO);
+        ServletContext servletContext = servletContextEvent.getServletContext();
+        NetworkParameters networkParameters = NetworkParameters.fromID(getConfigParameter(servletContext, Param.NETWORK));
+        context = new Context(networkParameters);
+        walletDirectory = new File(getConfigParameter(servletContext, Param.WALLET_DIR));
+        popDesitnation = getConfigParameter(servletContext, Param.POP_DESTINATION);
+        cachePersistenceDirectory = new File(getConfigParameter(servletContext, Param.CACHE_PERSISTENCE_DIR));
+        String addressString = getConfigParameter(servletContext, Param.SEND_FUNDS_TO);
         if (addressString != null) {
             try {
                 addressToSendFundsTo = new Address(networkParameters, addressString);
@@ -94,15 +100,15 @@ public class Config implements ServletContextListener {
                 throw new RuntimeException("Invalid address: " + addressString, e);
             }
         }
-        txServiceUrl = getConfigParameter(context, Param.TX_SERVICE_URL);
-        txServiceUser = getConfigParameter(context, Param.TX_SERVICE_USER);
-        txServicePassword = getConfigParameter(context, Param.TX_SERVICE_PASSWORD);
+        txServiceUrl = getConfigParameter(servletContext, Param.TX_SERVICE_URL);
+        txServiceUser = getConfigParameter(servletContext, Param.TX_SERVICE_USER);
+        txServicePassword = getConfigParameter(servletContext, Param.TX_SERVICE_PASSWORD);
         logger.info(toString());
-        context.setAttribute("config", this);
+        servletContext.setAttribute("config", this);
     }
 
     public String toString() {
-        return "NetworkParameters: " + getNetworkParameters() +
+        return "NetworkParameters: " + getContext().getParams() +
                 ", walletDirectory: " + getWalletDirectory().getAbsolutePath() +
                 ", popDestination: " + getPopDesitnation() +
                 ", cachePersistenceDirectory: " + getCachePersistenceDirectory().getAbsolutePath() +

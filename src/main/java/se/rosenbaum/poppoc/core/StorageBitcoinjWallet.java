@@ -20,11 +20,11 @@ public class StorageBitcoinjWallet implements ServletContextListener, Wallet {
     private Logger logger = LoggerFactory.getLogger(StorageBitcoinjWallet.class);
     private WalletAppKit walletAppKit;
     private Storage storage;
-    private NetworkParameters params;
+    private Context context;
     private Address addressToMoveIncomingFundsTo;
 
     public void start(File walletDirectory) {
-        walletAppKit = new WalletAppKit(params, walletDirectory, "pop" + params.getClass().getSimpleName());
+        walletAppKit = new WalletAppKit(context, walletDirectory, "pop" + context.getParams().getClass().getSimpleName());
 
         WalletEventListener walletEventListener = new AbstractWalletEventListener() {
             @Override
@@ -34,7 +34,7 @@ public class StorageBitcoinjWallet implements ServletContextListener, Wallet {
                     if (!output.isMine(wallet)) {
                         continue;
                     }
-                    Address address = output.getAddressFromP2PKHScript(params);
+                    Address address = output.getAddressFromP2PKHScript(context.getParams());
                     logger.info("Payment received. Value: {} Txid: {}", tx.getValueSentToMe(wallet), tx.getHash());
                     storage.storePayment(address, tx.getHash(), tx.getValueSentToMe(wallet).getValue());
                 }
@@ -86,13 +86,14 @@ public class StorageBitcoinjWallet implements ServletContextListener, Wallet {
 
     public void contextInitialized(ServletContextEvent servletContextEvent) {
         logger.debug("Wallet initializing");
-        ServletContext context = servletContextEvent.getServletContext();
-        this.storage = (Storage) context.getAttribute("storage");
-        Config config = (Config)context.getAttribute("config");
-        params = config.getNetworkParameters();
+        ServletContext servletContext = servletContextEvent.getServletContext();
+        this.storage = (Storage) servletContext.getAttribute("storage");
+        Config config = (Config)servletContext.getAttribute("config");
+        context = config.getContext();
+        Context.propagate(context);
         addressToMoveIncomingFundsTo = config.getAddressToSendFundsTo();
         start(config.getWalletDirectory());
-        context.setAttribute("wallet", this);
+        servletContext.setAttribute("wallet", this);
         logger.debug("Wallet initialized");
     }
 
