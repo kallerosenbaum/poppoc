@@ -15,8 +15,8 @@ import org.slf4j.LoggerFactory;
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 
-public class TransactionDownloader implements TransactionStore {
-    private Logger logger = LoggerFactory.getLogger(TransactionDownloader.class);
+public class ChainTransactionDownloader implements TransactionStore {
+    private Logger logger = LoggerFactory.getLogger(ChainTransactionDownloader.class);
 
     private String keyId;
     private String keySecret;
@@ -25,7 +25,7 @@ public class TransactionDownloader implements TransactionStore {
     private String chainUrl;
     private Wallet wallet;
 
-    public TransactionDownloader(Wallet wallet, String keyId, String keySecret, String chainUrl, NetworkParameters networkParameters) {
+    public ChainTransactionDownloader(Wallet wallet, String keyId, String keySecret, String chainUrl, NetworkParameters networkParameters) {
         this.keyId = keyId;
         this.keySecret = keySecret;
         this.networkParameters = networkParameters;

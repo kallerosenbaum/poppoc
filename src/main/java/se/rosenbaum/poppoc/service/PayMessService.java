@@ -9,7 +9,7 @@ import se.rosenbaum.poppoc.paymess.MessageSpace;
 import java.util.Map;
 
 public class PayMessService extends StandardService {
-    public static final long PRICE_SATOSHIS = 500000L;
+    public static final long PRICE_SATOSHIS = 100000L;
     private MessageSpace messageSpace;
 
     public int getServiceId() {

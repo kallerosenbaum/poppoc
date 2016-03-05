@@ -26,19 +26,19 @@
                description="On every payment to the server's wallet, empty the wallet and send to this address. If not
                set, it will keep the funds on the server wallet"/>
 -->
-    <Parameter name="chainKeyId"
+    <Parameter name="txServiceUser"
                value="mykeyid"
                override="false"
-               description="This is used to download transactions from chain.com. Create an account there to get a key id and secret."/>
+               description="This is used to download transactions from the transaction download service."/>
 
-    <Parameter name="chainKeySecret"
+    <Parameter name="txServicePassword"
                value="mykeysecret"
                override="false"
-               description="This is used to download transactions from chain.com. Create an account there to get a key id and secret."/>
+               description="This is used to download transactions from the transaction download service."/>
 
-    <Parameter name="chainUrl"
-               value="https://api.chain.com/v2"
+    <Parameter name="txServiceUrl"
+               value="http://localhost:18332"
                override="false"
-               description="This is the url to the chain.com rest api, without credentials"/>
+               description="This is the url to the transaction download service, without credentials. The service is hardcoded to use bitcoind's json rpc interface."/>
 
 </Context>

@@ -20,9 +20,9 @@ public class Config implements ServletContextListener {
         WALLET_DIR("walletDir"),
         CACHE_PERSISTENCE_DIR("cachePersistenceDir"),
         SEND_FUNDS_TO("sendFundsTo"),
-        CHAIN_URL("chainUrl"),
-        CHAIN_KEY_ID("chainKeyId"),
-        CHAIN_KEY_SECRET("chainKeySecret");
+        TX_SERVICE_URL("txServiceUrl"),
+        TX_SERVICE_USER("txServiceUser"),
+        TX_SERVICE_PASSWORD("txServicePassword");
 
         private String paramName;
 
@@ -40,9 +40,9 @@ public class Config implements ServletContextListener {
     private File cachePersistenceDirectory;
     private String popDesitnation;
     private Address addressToSendFundsTo = null;
-    private String chainUrl;
-    private String chainKeyId;
-    private String chainKeySecret;
+    private String txServiceUrl;
+    private String txServiceUser;
+    private String txServicePassword;
 
     public NetworkParameters getNetworkParameters() {
         return networkParameters;
@@ -64,16 +64,16 @@ public class Config implements ServletContextListener {
         return addressToSendFundsTo;
     }
 
-    public String getChainUrl() {
-        return chainUrl;
+    public String getTxServiceUrl() {
+        return txServiceUrl;
     }
 
-    public String getChainKeyId() {
-        return chainKeyId;
+    public String getTxServiceUser() {
+        return txServiceUser;
     }
 
-    public String getChainKeySecret() {
-        return chainKeySecret;
+    public String getTxServicePassword() {
+        return txServicePassword;
     }
 
     private String getConfigParameter(ServletContext context, Param param) {
@@ -94,9 +94,9 @@ public class Config implements ServletContextListener {
                 throw new RuntimeException("Invalid address: " + addressString, e);
             }
         }
-        chainUrl = getConfigParameter(context, Param.CHAIN_URL);
-        chainKeyId = getConfigParameter(context, Param.CHAIN_KEY_ID);
-        chainKeySecret = getConfigParameter(context, Param.CHAIN_KEY_SECRET);
+        txServiceUrl = getConfigParameter(context, Param.TX_SERVICE_URL);
+        txServiceUser = getConfigParameter(context, Param.TX_SERVICE_USER);
+        txServicePassword = getConfigParameter(context, Param.TX_SERVICE_PASSWORD);
         logger.info(toString());
         context.setAttribute("config", this);
     }
@@ -107,9 +107,9 @@ public class Config implements ServletContextListener {
                 ", popDestination: " + getPopDesitnation() +
                 ", cachePersistenceDirectory: " + getCachePersistenceDirectory().getAbsolutePath() +
                 ", addressToSendFundsTo: " + getAddressToSendFundsTo() +
-                ", chainUrl: " + chainUrl +
-                ", chainKeyId: " + chainKeyId +
-                ", chainKeySecret: " + (chainKeySecret != null ? "set but undisclosed" : null);
+                ", txServiceUrl: " + txServiceUrl +
+                ", txServiceUser: " + txServiceUser +
+                ", txServicePassword: " + (txServicePassword != null ? "set but undisclosed" : null);
     }
 
     public void contextDestroyed(ServletContextEvent servletContextEvent) {

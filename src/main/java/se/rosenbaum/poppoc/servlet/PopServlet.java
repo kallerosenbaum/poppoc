@@ -3,16 +3,15 @@ package se.rosenbaum.poppoc.servlet;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import se.rosenbaum.jpop.Pop;
-import se.rosenbaum.jpop.PopRequest;
 import se.rosenbaum.jpop.validate.InvalidPopException;
 import se.rosenbaum.jpop.validate.PopValidator;
 import se.rosenbaum.jpop.validate.TransactionStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.rosenbaum.poppoc.core.BitcoinRPCTransactionStore;
 import se.rosenbaum.poppoc.core.Config;
 import se.rosenbaum.poppoc.core.PopRequestWithServiceType;
 import se.rosenbaum.poppoc.core.Storage;
-import se.rosenbaum.poppoc.core.TransactionDownloader;
 import se.rosenbaum.poppoc.service.ServiceType;
 
 import javax.servlet.ServletException;
@@ -61,10 +60,12 @@ public class PopServlet extends BasicServlet {
         Pop pop = new Pop(getConfig().getNetworkParameters(), out.toByteArray());
 
         Config config = getConfig();
-        TransactionDownloader transactionDownloader = new TransactionDownloader(getWallet(), config.getChainKeyId(), config.getChainKeySecret(), config.getChainUrl(), config.getNetworkParameters());
+//        TransactionStore transactionStore = new ChainTransactionDownloader(getWallet(), config.getTxServiceUser(), config.getTxServicePassword(), config.getTxServiceUrl(), config.getNetworkParameters());
+        TransactionStore transactionStore = new BitcoinRPCTransactionStore(config.getNetworkParameters(), config.getTxServiceUrl(), config.getTxServiceUser(), config.getTxServicePassword());
+
 
         try {
-            Sha256Hash txid = validatePop(transactionDownloader, pop, popRequest);
+            Sha256Hash txid = validatePop(transactionStore, pop, popRequest);
             replySuccess(response);
             storage.storeVerifiedPop(requestId, txid);
         } catch (InvalidPopException e) {
@@ -120,7 +121,7 @@ public class PopServlet extends BasicServlet {
         // If specific txid is requested, Check that the pop proves that tx.
         Sha256Hash provenTxid = provenTransaction.getHash();
         if (popRequest.getTxid() != null) {
-            if (!provenTxid.toString().equals(popRequest.getTxid())) {
+            if (!provenTxid.equals(popRequest.getTxid())) {
                 throw new InvalidPopException("Wrong transaction");
             }
         }

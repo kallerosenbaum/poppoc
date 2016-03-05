@@ -23,7 +23,7 @@ A payment will give one year exclusivity on the message space. A message must no
 <form method="GET" action="NewMessageSpace">
     <p>
         <input required="required" pattern=".{1,140}" type="text" name="messageSpaceText" value="" placeholder="New message here"/>
-        <input type="submit" value="Create"/> (5 mBTC)
+        <input type="submit" value="Create"/> (1 mBTC)
     </p>
 </form>
 

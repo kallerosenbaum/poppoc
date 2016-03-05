@@ -4,21 +4,17 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.junit.Before;
-import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- * Created by kalle on 2015-04-11.
- */
 public class TransactionDownloaderTest {
-    TransactionDownloader sut;
+    ChainTransactionDownloader sut;
 
     @Before
     public void setup() {
         String keyId = System.getProperty("chain.key.id");
         String keySecret = System.getProperty("chain.key.secret");
-        sut = new TransactionDownloader(null, keyId, keySecret, "https://api.chain.com/v2", NetworkParameters.fromID("org.bitcoin.test"));
+        sut = new ChainTransactionDownloader(null, keyId, keySecret, "https://api.chain.com/v2", NetworkParameters.fromID("org.bitcoin.test"));
     }
 
  //   @Test
