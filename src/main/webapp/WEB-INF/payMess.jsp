@@ -17,7 +17,7 @@
 
 <p>On this site you pay for a message space. The message space will appear at the top of the list below.
 To update it you click on the text you want to update. This will take you to the Proof of Payment page.
-A payment will give one year exclusivity on the message space. A message must not be longer than 140 characters.</p>
+A payment will give one week exclusivity on the message space. A message must not be longer than 140 characters.</p>
 
 
 <form method="GET" action="NewMessageSpace">
