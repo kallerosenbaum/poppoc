@@ -25,7 +25,7 @@ public class StorageBitcoinjWallet implements ServletContextListener, Wallet {
 
     public void start(File walletDirectory) {
         walletAppKit = new WalletAppKit(context, walletDirectory, "pop" + context.getParams().getClass().getSimpleName());
-
+        walletAppKit.setBlockingStartup(false);
         WalletEventListener walletEventListener = new AbstractWalletEventListener() {
             @Override
             public void onCoinsReceived(org.bitcoinj.core.Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
